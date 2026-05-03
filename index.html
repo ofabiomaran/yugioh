@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Yu-Gi-Oh! Forbidden Memories — Site Completo</title>
+<style>
+:root{--bg:#05050d;--panel:#101426;--text:#f4f7ff;--muted:#aab2d8;--cyan:#00eaff;--purple:#a855f7;--green:#35ff9b;--yellow:#ffd166;--red:#ff5577;--line:rgba(255,255,255,.13)}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--text);background:radial-gradient(circle at 20% 0%,rgba(0,234,255,.18),transparent 28%),radial-gradient(circle at 80% 10%,rgba(168,85,247,.22),transparent 30%),linear-gradient(180deg,#03040a,#090b18 55%,#03040a);min-height:100vh}
+header{text-align:center;padding:28px 14px 12px}h1{margin:0;font-size:clamp(26px,5vw,48px);text-shadow:0 0 22px rgba(0,234,255,.55)}h2{margin:0 0 12px}p{line-height:1.5}.wrap{width:min(1220px,100%);margin:auto;padding:14px}
+.card{background:linear-gradient(180deg,rgba(23,27,52,.94),rgba(10,12,25,.95));border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 20px 60px rgba(0,0,0,.38),inset 0 0 0 1px rgba(255,255,255,.03)}
+.grid{display:grid;grid-template-columns:1fr;gap:14px}@media(min-width:960px){.grid{grid-template-columns:1.05fr .95fr}}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+label{display:block;color:var(--muted);font-size:13px;margin:0 0 6px}input,select,textarea,button{width:100%;border:1px solid var(--line);background:#0a0d1b;color:var(--text);border-radius:13px;padding:12px;font-size:15px;outline:none}
+button{width:auto;cursor:pointer;border:0;font-weight:800;background:linear-gradient(90deg,var(--purple),var(--cyan));color:white}button.secondary{background:#11172d;border:1px solid var(--line)}button.good{background:linear-gradient(90deg,#00b16a,var(--green));color:#03150c}
+.small{font-size:12px;color:var(--muted)}.warn{color:var(--yellow)}pre{white-space:pre-wrap;word-break:break-word;background:#060814;border:1px solid var(--line);border-radius:14px;padding:14px;color:#dffcff;min-height:56px}
+.badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#0a0d1b;border-radius:999px;padding:8px 11px;color:var(--muted);font-size:12px;margin:3px}
+#gameContainer{width:100%;aspect-ratio:4/3;background:#010208;border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--muted);text-align:center;min-height:300px}
+#game{width:100%;height:100%}.toolbar{display:grid;grid-template-columns:1fr;gap:10px;margin:10px 0}@media(min-width:820px){.toolbar{grid-template-columns:1.4fr .7fr .7fr}}
+.tableBox{max-height:430px;overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08);font-size:14px;text-align:left}th{position:sticky;top:0;background:#12162c;z-index:1}tr{cursor:pointer}tr:hover{background:rgba(0,234,255,.08)}.selected{outline:2px solid var(--cyan);background:rgba(0,234,255,.09)}
+.footer{text-align:center;color:var(--muted);font-size:12px;padding:28px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Yu-Gi-Oh! Forbidden Memories</h1>
+  <p class="small">Site completo: jogar com sua própria ROM legal, gerar cheats, consultar cartas e simular RNG 2048.</p>
+</header>
+<main class="wrap">
+<section class="card">
+  <h2>🎮 Jogar no navegador</h2>
+  <p class="small">Esta página não hospeda ROM, ISO ou BIOS. Para jogar, carregue sua própria cópia legal do jogo. Para PS1, alguns emuladores exigem BIOS própria, como SCPH5501.</p>
+  <div class="grid">
+    <div><label>Arquivo do jogo (.bin, .cue, .iso, .img, .chd, .pbp)</label><input id="romFile" type="file" accept=".bin,.cue,.iso,.img,.chd,.pbp,.zip,.7z"></div>
+    <div><label>BIOS do PS1, se necessário (.bin)</label><input id="biosFile" type="file" accept=".bin"></div>
+  </div>
+  <div class="row" style="margin-top:10px"><button class="good" onclick="startEmulator()">Iniciar emulador</button><button class="secondary" onclick="openExternal()">Abrir link externo</button></div>
+  <div id="gameContainer" style="margin-top:12px"><div><b>Emulador aguardando ROM</b><br><span class="small">Carregue sua cópia do jogo e clique em iniciar.</span></div></div>
+</section>
+<section class="card">
+  <h2>⚠️ Modo 100% recompensa</h2>
+  <p class="small">Para a versão original NTSC-U / SLUS-01411, o endereço usado publicamente para carta de recompensa é:</p>
+  <pre>80179A14 XXXX</pre>
+  <p class="small">Substitua <b>XXXX</b> pelo ID oficial da carta em hexadecimal. Exemplo:</p>
+  <pre>Blue-Eyes White Dragon / carta 001
+80179A14 0001
+
+Blue-Eyes Ultimate Dragon / carta 380
+80179A14 017C</pre>
+  <p class="small warn">Se sua ROM for PAL, japonesa, traduzida, hack/mod ou outra revisão, o endereço pode mudar.</p>
+</section>
+<div class="grid">
+<section class="card">
+  <h2>🃏 Cartas</h2>
+  <div class="row"><span class="badge">Base RNG: <b>2048</b></span><span class="badge">IDs oficiais: <b>001–722</b></span><span class="badge">HEX = ID oficial</span></div>
+  <p class="small">Esta versão vem com cartas principais e permite importar a lista completa em CSV. Formato: id,nome,tipo,subtipo,atk,def,password,custo,drop</p>
+  <div class="toolbar">
+    <div><label>Buscar</label><input id="q" placeholder="Ex: Blue-eyes, Exodia, 380" oninput="renderTable()"></div>
+    <div><label>Ordenar</label><select id="sortBy" onchange="renderTable()"><option value="id">ID</option><option value="name">Nome</option><option value="atk">ATK</option><option value="def">DEF</option></select></div>
+    <div><label>Sentido</label><select id="sortDir" onchange="renderTable()"><option value="asc">Crescente</option><option value="desc">Decrescente</option></select></div>
+  </div>
+  <div class="row"><button onclick="loadStarter()">Carregar base inicial</button><button class="secondary" onclick="exportCSV()">Exportar CSV</button></div>
+  <label style="margin-top:10px">Importar CSV completo</label><textarea id="csvInput" rows="5" placeholder="id,nome,tipo,subtipo,atk,def,password,custo,drop"></textarea>
+  <div class="row" style="margin-top:8px"><button onclick="importCSV()">Importar lista</button></div>
+  <div class="tableBox" style="margin-top:12px"><table><thead><tr><th>ID</th><th>Carta</th><th>ATK</th><th>DEF</th><th>Onde dropar</th></tr></thead><tbody id="tbody"></tbody></table></div>
+</section>
+<aside class="card">
+  <h2>🔧 Gerador de cheat</h2>
+  <label>Endereço da carta de recompensa</label><input id="address" value="80179A14" placeholder="Ex: 80179A14">
+  <p class="small">Selecione uma carta na lista. O site gera o código no formato GameShark/PEC.</p>
+  <div class="row"><button class="good" onclick="generateCheat()">Gerar código</button><button class="secondary" onclick="copyText('cheatOut')">Copiar</button></div>
+  <pre id="cheatOut">Selecione uma carta.</pre>
+  <h2>📊 Simulador RNG 2048</h2>
+  <div class="grid"><div><label>Peso do drop</label><input id="dropWeight" type="number" min="1" max="2048" value="64"></div><div><label>Duelos</label><input id="duels" type="number" min="1" value="100"></div></div>
+  <div class="row" style="margin-top:10px"><button onclick="calcDrop()">Calcular</button><button class="secondary" onclick="simulateDrop()">Simular</button></div>
+  <pre id="dropOut"></pre>
+  <h2>⚙️ Master Code</h2>
+  <pre>D0168188 023A
+8016818A 1000
+
+ou
+
+D0168100 000A
+80168102 1000</pre>
+  <p class="small">Alguns emuladores não precisam. No GameShark/PEC antigo, pode ser necessário.</p>
+</aside>
+</div>
+<section class="card">
+  <h2>🚀 Guia de farm rápido</h2>
+  <pre>1. Use a versão NTSC-U / SLUS-01411.
+2. Ative o cheat antes da tela de recompensa.
+3. Use o código da carta desejada.
+4. Ligue Fast Forward/Turbo no emulador.
+5. Repita o duelo para farmar várias cópias rapidamente.</pre>
+</section>
+</main>
+<div class="footer">Desenvolvido por: Fabio Maran — ferramenta para uso com cópia própria do jogo.</div>
+<script>
+let cards=[];let selected=null;
+const starter=[
+{id:1,name:"Blue-Eyes White Dragon",type:"Monster",subtype:"Dragon",atk:3000,def:2500,password:"89631139",cost:"999999",drop:"Seto 3rd, Heishin 2nd, Nitemare"},
+{id:2,name:"Mystical Elf",type:"Monster",subtype:"Spellcaster",atk:800,def:2000,password:"15025844",cost:"160",drop:"Tea, Simon Muran"},
+{id:3,name:"Hitotsu-Me Giant",type:"Monster",subtype:"Beast-Warrior",atk:1200,def:1000,password:"76184692",cost:"70",drop:"Jono, Villager 1"},
+{id:16,name:"Time Wizard",type:"Monster",subtype:"Spellcaster",atk:500,def:400,password:"71625222",cost:"290",drop:"Jono 2nd, Meadow Mage"},
+{id:17,name:"Right Leg of the Forbidden One",type:"Monster",subtype:"Spellcaster",atk:200,def:300,password:"08124921",cost:"999999",drop:"Seto 3rd, Nitemare"},
+{id:18,name:"Left Leg of the Forbidden One",type:"Monster",subtype:"Spellcaster",atk:200,def:300,password:"44519536",cost:"999999",drop:"Seto 3rd, Nitemare"},
+{id:19,name:"Right Arm of the Forbidden One",type:"Monster",subtype:"Spellcaster",atk:200,def:300,password:"70903634",cost:"999999",drop:"Seto 3rd, Nitemare"},
+{id:20,name:"Left Arm of the Forbidden One",type:"Monster",subtype:"Spellcaster",atk:200,def:300,password:"07902349",cost:"999999",drop:"Seto 3rd, Nitemare"},
+{id:21,name:"Exodia the Forbidden",type:"Monster",subtype:"Spellcaster",atk:1000,def:1000,password:"33396948",cost:"999999",drop:"Seto 3rd, Nitemare"},
+{id:22,name:"Summoned Skull",type:"Monster",subtype:"Fiend",atk:2500,def:1200,password:"70781052",cost:"999999",drop:"Meadow Mage, Seto 3rd"},
+{id:35,name:"Dark Magician",type:"Monster",subtype:"Spellcaster",atk:2500,def:2100,password:"46986414",cost:"999999",drop:"Meadow Mage, Nitemare"},
+{id:37,name:"Red-Eyes B. Dragon",type:"Monster",subtype:"Dragon",atk:2400,def:2000,password:"74677422",cost:"999999",drop:"Jono 2nd, Seto 2nd"},
+{id:106,name:"Spirit of the Winds",type:"Monster",subtype:"Spellcaster",atk:1700,def:1400,password:"54615781",cost:"260",drop:"Mage Soldier"},
+{id:107,name:"Kaminari Attack",type:"Monster",subtype:"Thunder",atk:1900,def:1400,password:"09653271",cost:"300",drop:"Meadow Mage"},
+{id:108,name:"Twin-Headed Thunder Dragon",type:"Monster",subtype:"Thunder",atk:2800,def:2100,password:"54752875",cost:"999999",drop:"Obtido principalmente por fusão"},
+{id:367,name:"Jirai Gumo",type:"Monster",subtype:"Insect",atk:2200,def:100,password:"94773007",cost:"999999",drop:"Forest Mage"},
+{id:380,name:"Blue-Eyes Ultimate Dragon",type:"Monster",subtype:"Dragon",atk:4500,def:3800,password:"23995346",cost:"999999",drop:"Código/recompensa especial; não é drop comum"},
+{id:722,name:"Magician of Black Chaos",type:"Monster",subtype:"Spellcaster",atk:2800,def:2600,password:"30208479",cost:"999999",drop:"Nitemare"}];
+function pad(n){return String(n).padStart(3,"0")}function idHex(n){return Number(n).toString(16).toUpperCase().padStart(4,"0")}function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function loadStarter(){cards=[...starter];selected=cards[0];renderTable();generateCheat();calcDrop()}
+function filtered(){const q=document.getElementById("q").value.toLowerCase().trim();const sort=document.getElementById("sortBy").value,dir=document.getElementById("sortDir").value;let arr=cards.filter(c=>(`${c.id} ${c.name} ${c.type} ${c.subtype} ${c.password} ${c.drop}`).toLowerCase().includes(q));arr.sort((a,b)=>{let va=a[sort],vb=b[sort];if(sort==="name"){va=String(va).toLowerCase();vb=String(vb).toLowerCase()}else{va=Number(va)||0;vb=Number(vb)||0}return(va>vb?1:va<vb?-1:0)*(dir==="asc"?1:-1)});return arr}
+function renderTable(){document.getElementById("tbody").innerHTML=filtered().map(c=>`<tr onclick="selectCard(${c.id})" class="${selected&&selected.id===c.id?'selected':''}"><td>${pad(c.id)}</td><td>${esc(c.name)}</td><td>${c.atk||"-"}</td><td>${c.def||"-"}</td><td>${esc(c.drop||"Importe tabela de drops")}</td></tr>`).join("")}
+function selectCard(id){selected=cards.find(c=>c.id===id);renderTable();generateCheat()}
+function generateCheat(){if(!selected){document.getElementById("cheatOut").textContent="Selecione uma carta.";return}const address=document.getElementById("address").value.trim().toUpperCase().replace(/\s/g,"");if(!/^[0-9A-F]{8}$/.test(address)){document.getElementById("cheatOut").textContent="Endereço inválido. Use 8 caracteres HEX.";return}const hex=idHex(selected.id);document.getElementById("cheatOut").textContent=`Carta: ${pad(selected.id)} - ${selected.name}\nHEX: ${hex}\n\nGameShark / PEC:\n${address} ${hex}\n\nOnde tentar dropar:\n${selected.drop||"Sem informação importada"}\n\nPara SLUS-01411, ative antes da recompensa.`}
+async function copyText(id){try{await navigator.clipboard.writeText(document.getElementById(id).textContent);alert("Copiado!")}catch(e){alert("Não consegui copiar automaticamente.")}}
+function calcDrop(){const w=Math.max(1,Math.min(2048,+document.getElementById("dropWeight").value||1));const n=Math.max(1,+document.getElementById("duels").value||1);const p=w/2048,total=1-Math.pow(1-p,n);const d=x=>Math.ceil(Math.log(1-x)/Math.log(1-p));document.getElementById("dropOut").textContent=`${w}/2048 = ${(p*100).toFixed(4)}% por duelo\nChance em ${n} duelo(s): ${(total*100).toFixed(2)}%\n\nDuelos aproximados:\n50%: ${d(.5)}\n75%: ${d(.75)}\n90%: ${d(.9)}`}
+function simulateDrop(){const w=Math.max(1,Math.min(2048,+document.getElementById("dropWeight").value||1));const n=Math.max(1,+document.getElementById("duels").value||1);let hits=0,first=null;for(let i=1;i<=n;i++){if(Math.floor(Math.random()*2048)<w){hits++;if(first===null)first=i}}document.getElementById("dropOut").textContent=`Simulação:\nDuelos: ${n}\nDrops: ${hits}\nPrimeiro drop: ${first?first+"º duelo":"não caiu"}`}
+function importCSV(){const txt=document.getElementById("csvInput").value.trim();if(!txt){alert("Cole o CSV primeiro.");return}const lines=txt.split(/\r?\n/).filter(Boolean),out=[];for(const line of lines){const p=line.split(",").map(x=>x.trim().replace(/^"|"$/g,""));if(p[0].toLowerCase()==="id")continue;out.push({id:+p[0],name:p[1]||"",type:p[2]||"",subtype:p[3]||"",atk:+p[4]||0,def:+p[5]||0,password:p[6]||"",cost:p[7]||"",drop:p.slice(8).join(",")||""})}cards=out.filter(c=>c.id&&c.name).sort((a,b)=>a.id-b.id);selected=cards[0]||null;renderTable();generateCheat()}
+function exportCSV(){if(!cards.length){alert("Carregue a base primeiro.");return}const header="id,nome,tipo,subtipo,atk,def,password,custo,drop";const rows=cards.map(c=>[c.id,c.name,c.type,c.subtype,c.atk,c.def,c.password,c.cost,c.drop].map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(","));const blob=new Blob([[header,...rows].join("\n")],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="forbidden_memories_cartas_drops.csv";a.click();URL.revokeObjectURL(a.href)}
+function openExternal(){window.open("https://www.retrostic.com/pt/roms/ps-1/yu-gi-oh-forbidden-memories-iso-slus-014-11-81210/play","_blank","noopener")}
+function startEmulator(){const rom=document.getElementById("romFile").files[0];const bios=document.getElementById("biosFile").files[0];if(!rom){alert("Carregue sua própria ROM/ISO primeiro.");return}const box=document.getElementById("gameContainer");box.innerHTML='<div id="game"></div>';window.EJS_player="#game";window.EJS_core="psx";window.EJS_gameName="Yu-Gi-Oh! Forbidden Memories";window.EJS_gameUrl=URL.createObjectURL(rom);if(bios)window.EJS_biosUrl=URL.createObjectURL(bios);window.EJS_pathtodata="https://cdn.emulatorjs.org/stable/data/";const s=document.createElement("script");s.src="https://cdn.emulatorjs.org/stable/data/loader.js";document.body.appendChild(s)}
+loadStarter();
+</script>
+</body>
+</html>
