@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Yu-Gi-Oh! Forbidden Memories — Database 722 Cartas</title>
+<title>Yu-Gi-Oh! Forbidden Memories — Database 722 Cartas + Calculadora de Rank</title>
 <style>
 :root {
   --bg:#05050d;--panel:#101426;--panel2:#171b34;--text:#f4f7ff;--muted:#aab2d8;
@@ -129,15 +129,25 @@ tr:hover{background:var(--soft)}
 </style>
 </head>
 <body>
-<header>
-  <h1>Yu-Gi-Oh! Forbidden Memories</h1>
-  <p class="small">Database corrigida com 722 cartas da planilha, imagens, filtros, seleção completa e gerador de cheat.</p>
-</header>
+<style>
+  .container-logo {
+    display: flex;
+    justify-content: center; /* Centraliza horizontalmente */
+    padding: auto;
+  }
+  .logo {
+    max-width: auto; /* Ajuste o tamanho da logo */
+    height: auto;
+  }
+</style>
 
+<div class="container-logo">
+  <img src="https://cdn2.steamgriddb.com/logo_thumb/0599212ac5b4670c30619bac376c189c.png" alt="Logo" class="logo">
+</div>
 <main class="wrap">
 
 <section class="card">
-  <h2>🎮 Jogar no navegador</h2>
+  <h2>🎮 Jogue direto do navegador</h2>
   <p class="small">Esta página não hospeda ROM, ISO ou BIOS. Para jogar, carregue sua própria cópia legal do jogo.</p>
   <div class="grid">
     <div><label>Arquivo do jogo (.bin, .cue, .iso, .img, .chd, .pbp)</label><input id="romFile" type="file" accept=".bin,.cue,.iso,.img,.chd,.pbp,.zip,.7z"></div>
@@ -146,7 +156,7 @@ tr:hover{background:var(--soft)}
   <div class="row" style="margin-top:10px"><button class="good" onclick="startEmulator()">Iniciar emulador</button></div>
   <div id="gameContainer" style="margin-top:12px"><div><b>Emulador aguardando ROM</b><br><span class="small">Carregue sua cópia do jogo e clique em iniciar.</span></div></div>
 </section>
-
+<div style="display: none;">
 <section class="card">
   <h2>🃏 Base completa das 722 cartas</h2>
   <div class="row">
@@ -160,7 +170,7 @@ tr:hover{background:var(--soft)}
     <div class="stat">Selecionada<b id="selId">---</b></div>
     <div class="stat">HEX<b id="selHex">----</b></div>
     
-  </div>
+  </div></div>
 
 </section>
 
@@ -194,41 +204,11 @@ tr:hover{background:var(--soft)}
   <h2>📌 Carta selecionada</h2>
   <div id="detail"></div>
 
-  <h2 style="margin-top:16px">🔧 Gerador de cheat de recompensa</h2>
-  <label>Endereço da carta de recompensa</label>
-  <input id="address" value="80179A14" placeholder="Ex: 80179A14">
-  <p class="small">Para SLUS-01411, use o endereço de recompensa acima e ative antes da carta aparecer.</p>
-  <div class="row">
-    <button class="good" onclick="generateCheat()">Gerar código</button>
-    <button class="secondary" onclick="copyText('cheatOut')">Copiar</button>
-  </div>
-  <pre id="cheatOut">Selecione uma carta.</pre>
-
-  <h2>📊 RNG 2048</h2>
-  <div class="grid">
-    <div><label>Peso do drop</label><input id="dropWeight" type="number" min="1" max="2048" value="64"></div>
-    <div><label>Duelos</label><input id="duels" type="number" min="1" value="100"></div>
-  </div>
-  <div class="row" style="margin-top:10px">
-    <button onclick="calcDrop()">Calcular</button>
-    <button class="secondary" onclick="simulateDrop()">Simular</button>
-  </div>
-  <pre id="dropOut"></pre>
+  
 </aside>
 </div>
 
-<section class="card">
-  <h2>⚠️ Modo 100% recompensa</h2>
-  <pre>Formato:
-80179A14 XXXX
 
-Exemplos:
-Blue-Eyes White Dragon / carta 001
-80179A14 0001
-
-Blue-Eyes Ultimate Dragon / carta 380
-80179A14 017C</pre>
-</section>
 
 <section class="card" id="guia-fases">
   <h2>🧭 Guia Interativo por Fases</h2>
@@ -608,7 +588,59 @@ Blue-Eyes Ultimate Dragon / carta 380
       </div>
     </div>
   </div>
+<section class="card" id="rank-calculator-fm">
+  <h2>🏆 Calculadora de Rank POW / TEC</h2>
+  <p class="small">Calculadora integrada com os critérios da calculadora de Rank enviada: turnos, ataques, defesas, fusões, magias, armadilhas, cartas restantes, LP e condição de vitória.</p>
 
+  <style>
+    #rank-calculator-fm .rankCalcGrid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px}
+    @media(min-width:760px){#rank-calculator-fm .rankCalcGrid{grid-template-columns:repeat(2,1fr)}}
+    @media(min-width:1120px){#rank-calculator-fm .rankCalcGrid{grid-template-columns:repeat(3,1fr)}}
+    #rank-calculator-fm .rankField{background:#080b19;border:1px solid var(--line);border-radius:16px;padding:12px}
+    #rank-calculator-fm .rankFieldTop{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+    #rank-calculator-fm .rankFieldTop b{font-size:14px;color:#dffcff}
+    #rank-calculator-fm .rankHelp{position:relative;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1px solid rgba(0,234,255,.35);color:var(--cyan);font-weight:900;cursor:help;background:rgba(0,234,255,.08)}
+    #rank-calculator-fm .rankHelp span{display:none;position:absolute;right:0;top:28px;width:min(300px,80vw);z-index:20;background:#03040a;border:1px solid var(--cyan);border-radius:12px;padding:10px;color:#f4f7ff;font-size:12px;line-height:1.45;box-shadow:0 12px 35px rgba(0,0,0,.55);white-space:pre-line}
+    #rank-calculator-fm .rankHelp:hover span{display:block}
+    #rank-calculator-fm .rankStepper{display:grid;grid-template-columns:44px 1fr 44px;gap:8px;align-items:center}
+    #rank-calculator-fm .rankStepper button{width:44px;height:44px;padding:0;border-radius:12px}
+    #rank-calculator-fm .rankStepper input{text-align:center;font-weight:800;color:#fff}
+    #rank-calculator-fm .rankRadios{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+    #rank-calculator-fm .rankRadio{display:flex;align-items:center;gap:8px;background:#080b19;border:1px solid var(--line);border-radius:999px;padding:9px 12px;color:#dffcff;cursor:pointer}
+    #rank-calculator-fm .rankRadio input{width:auto}
+    #rank-calculator-fm .rankResult{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px}
+    @media(min-width:760px){#rank-calculator-fm .rankResult{grid-template-columns:repeat(3,1fr)}}
+    #rank-calculator-fm .rankBig{background:linear-gradient(135deg,rgba(168,85,247,.18),rgba(0,234,255,.12));border:1px solid rgba(0,234,255,.35);border-radius:18px;padding:14px;text-align:center}
+    #rank-calculator-fm .rankBig span{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
+    #rank-calculator-fm .rankBig b{font-size:26px;color:var(--cyan)}
+    #rank-calculator-fm .rankBreakdown{margin-top:10px;min-height:70px}
+  </style>
+
+  <div class="rankCalcGrid" id="rankCalcFields"></div>
+
+  <fieldset id="rankWinningBox" style="border:1px solid var(--line);border-radius:16px;padding:12px;margin-top:12px">
+    <legend style="color:var(--cyan);font-weight:800">Condição de vitória</legend>
+    <div class="rankRadios">
+      <label class="rankRadio"><input type="radio" name="rankWinType" value="annihilation" checked onchange="calculateFmRank()"> Annihilation</label>
+      <label class="rankRadio"><input type="radio" name="rankWinType" value="deck" onchange="calculateFmRank()"> Deck</label>
+      <label class="rankRadio"><input type="radio" name="rankWinType" value="exodia" onchange="calculateFmRank()"> Exodia</label>
+    </div>
+  </fieldset>
+
+  <div class="row" style="margin-top:12px">
+    <button class="good" onclick="calculateFmRank()">Calcular Rank</button>
+    <button class="secondary" onclick="rankPresetTC()">Update T&amp;C</button>
+    <button class="secondary" onclick="rankReset()">Reset</button>
+  </div>
+
+  <div class="rankResult">
+    <div class="rankBig"><span>Pontos</span><b id="rankPoints">101</b></div>
+    <div class="rankBig"><span>Rank</span><b id="rankName">S - A Pow</b></div>
+    <div class="rankBig"><span>Modo</span><b id="rankModeOut">POW</b></div>
+  </div>
+
+  <pre class="rankBreakdown" id="rankBreakdownOut"></pre>
+</section>
   <script>
     function showPhase(index){
       const panels = document.querySelectorAll('#guia-fases .phasePanel');
@@ -1562,5 +1594,89 @@ window.DROPS_DB = {"112":[{"duelist":"Yami Bakura","rank":"S-A","mode":"POW","ch
 })();
 </script>
 
+<script>
+(function(){
+  const rankRules = [
+    {id:'turns', label:'Turns', value:0, tip:'Turns duration of the duel\nn < 5: 12 pts\n5 <= n < 9: 8 pts\n9 <= n < 29: 0 pts\n29 <= n < 33: -8 pts\nn >= 33: -12 pts', score:n=>n<5?12:n<9?8:n<29?0:n<33?-8:-12},
+    {id:'effectiveAttacks', label:'Effective Attacks', value:0, tip:"When your monster destroys an opponent's monster that is in attack position\nn < 2: 4 pts\n2 <= n < 4: 2 pts\n4 <= n < 10: 0 pts\n10 <= n < 20: -2 pts\nn >= 20: -4 pts", score:n=>n<2?4:n<4?2:n<10?0:n<20?-2:-4},
+    {id:'defensiveWins', label:'Defensive Wins', value:0, tip:"When your monster in defense mode survives an opponent's monster attack\nn < 2: 0 pts\n2 <= n < 6: -10 pts\n6 <= n < 10: -20 pts\n10 <= n < 15: -30 pts\nn >= 15: -40 pts", score:n=>n<2?0:n<6?-10:n<10?-20:n<15?-30:-40},
+    {id:'faceDownPlays', label:'Face-down Plays', value:0, tip:"Number of cards you've played face-down\nn < 1: 0 pts\n1 <= n < 11: -2 pts\n11 <= n < 21: -4 pts\n21 <= n < 31: -6 pts\nn >= 31: -8 pts", score:n=>n<1?0:n<11?-2:n<21?-4:n<31?-6:-8},
+    {id:'initiateFusion', label:'Initiate Fusion', value:0, tip:"Number of fusions you've made\nn < 1: 4 pts\n1 <= n < 5: 0 pts\n5 <= n < 10: -4 pts\n10 <= n < 15: -8 pts\nn >= 15: -12 pts", score:n=>n<1?4:n<5?0:n<10?-4:n<15?-8:-12},
+    {id:'equipMagic', label:'Equip Magic', value:0, tip:"Number of equip magics you've played\nn < 1: 4 pts\n1 <= n < 5: 0 pts\n5 <= n < 10: -4 pts\n10 <= n < 15: -8 pts\nn >= 15: -12 pts", score:n=>n<1?4:n<5?0:n<10?-4:n<15?-8:-12},
+    {id:'pureMagic', label:'Pure Magic', value:0, tip:"Number of pure magics you've played\nn < 1: 2 pts\n1 <= n < 4: -4 pts\n4 <= n < 7: -8 pts\n7 <= n < 10: -12 pts\nn >= 10: -16 pts", score:n=>n<1?2:n<4?-4:n<7?-8:n<10?-12:-16},
+    {id:'triggerTrap', label:'Trigger Trap', value:0, tip:"Number of traps you've triggered\nn < 1: 2 pts\n1 <= n < 3: -8 pts\n3 <= n < 5: -16 pts\n5 <= n < 7: -24 pts\nn >= 7: -32 pts", score:n=>n<1?2:n<3?-8:n<5?-16:n<7?-24:-32},
+    {id:'remainingCards', label:'Remaining Cards', value:35, tip:"Remaining cards on player's deck\nn < 4: -7 pts\n4 <= n < 8: -5 pts\n8 <= n < 28: 0 pts\n28 <= n < 32: 12 pts\nn >= 32: 15 pts", score:n=>n<4?-7:n<8?-5:n<28?0:n<32?12:15},
+    {id:'remainingLp', label:'Remaining Life Points', value:8000, tip:"Player's remaining LP\nn < 100: -7 pts\n100 <= n < 1000: -5 pts\n1000 <= n < 7000: 0 pts\n7000 <= n < 8000: 4 pts\nn >= 8000: 6 pts", score:n=>n<100?-7:n<1000?-5:n<7000?0:n<8000?4:6}
+  ];
+
+  const winBonus = {annihilation:52, deck:40, exodia:40};
+
+  function escRank(s){return String(s).replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[m]));}
+  function val(id){return Number(document.getElementById('rank_'+id)?.value || 0);}
+  function setVal(id,v){const el=document.getElementById('rank_'+id); if(el) el.value = Math.max(0, Number(v)||0);}
+  function rankLabel(points, mode){
+    let grade = points >= 90 ? 'S - A' : points >= 80 ? 'B - C' : points >= 70 ? 'D - E' : 'Duelista Baixo';
+    return grade + ' ' + (mode === 'TEC' ? 'Tec' : 'Pow');
+  }
+
+  window.changeRankValue = function(id,delta){setVal(id, val(id)+delta); calculateFmRank();};
+
+  window.calculateFmRank = function(){
+    let points = 0;
+    const rows = [];
+    rankRules.forEach(r=>{
+      const n = val(r.id);
+      const pts = r.score(n);
+      points += pts;
+      rows.push(`${r.label}: ${n} = ${pts} pts`);
+    });
+    const win = document.querySelector('input[name="rankWinType"]:checked')?.value || 'annihilation';
+    const bonus = winBonus[win] ?? 0;
+    points += bonus;
+    const mode = win === 'deck' ? 'TEC' : 'POW';
+    const rank = rankLabel(points, mode);
+
+    const rp = document.getElementById('rankPoints');
+    const rn = document.getElementById('rankName');
+    const rm = document.getElementById('rankModeOut');
+    const rb = document.getElementById('rankBreakdownOut');
+    if(rp) rp.textContent = points;
+    if(rn) rn.textContent = rank;
+    if(rm) rm.textContent = mode;
+    if(rb) rb.textContent = rows.join('\n') + `\nCondição ${win}: +${bonus} pts\nTotal: ${points} pts`;
+  };
+
+  window.rankPresetTC = function(){
+    setVal('turns',10);
+    setVal('remainingCards',20);
+    calculateFmRank();
+  };
+
+  window.rankReset = function(){
+    rankRules.forEach(r=>setVal(r.id,r.value));
+    const a = document.querySelector('input[name="rankWinType"][value="annihilation"]');
+    if(a) a.checked = true;
+    calculateFmRank();
+  };
+
+  function buildRankCalc(){
+    const box = document.getElementById('rankCalcFields');
+    if(!box) return;
+    box.innerHTML = rankRules.map(r => `
+      <div class="rankField">
+        <div class="rankFieldTop"><b>${escRank(r.label)}</b><span class="rankHelp">?<span>${escRank(r.tip)}</span></span></div>
+        <div class="rankStepper">
+          <button type="button" class="secondary" onclick="changeRankValue('${r.id}',-1)">−</button>
+          <input id="rank_${r.id}" type="number" min="0" value="${r.value}" oninput="calculateFmRank()">
+          <button type="button" onclick="changeRankValue('${r.id}',1)">+</button>
+        </div>
+      </div>`).join('');
+    calculateFmRank();
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', buildRankCalc);
+  else buildRankCalc();
+})();
+</script>
 </body>
 </html>
