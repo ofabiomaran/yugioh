@@ -227,7 +227,7 @@ tr:hover{background:var(--soft)}
 <section class="card">
   <h2>🔎 Todas as cartas</h2>
   <div class="toolbar">
-    <div><label>Buscar em todos os campos</label><input id="q" list="cardSearchSuggestions" placeholder="Ex: Blue-eyes, Dragao Branco, Dragon Blanco, 89631139..." oninput="renderTable()"><datalist id="cardSearchSuggestions"></datalist></div>
+    <div><label>Buscar em todos os campos</label><input id="q" list="cardSearchSuggestions" placeholder="Ex: Blue-eyes, Dragon, Dark Magician, 89631139..." oninput="renderTable()"><datalist id="cardSearchSuggestions"></datalist></div>
     <div><label>Categoria</label><select id="catFilter" onchange="renderTable()"><option value="">Todas</option></select></div>
     <div><label>Atributo</label><select id="attrFilter" onchange="renderTable()"><option value="">Todos</option></select></div>
     <div><label>Tipo</label><select id="typeFilter" onchange="renderTable()"><option value="">Todos</option></select></div>
@@ -435,14 +435,22 @@ Mars → Jupiter → Saturn → Uranus → Pluto → Neptune → Mars</pre>
 
   <div class="routeStep">
     <h3>🌿 7. Farm Meadow Mage</h3>
-    <p>Essa é uma das etapas mais importantes para fortalecer o deck.</p>
+    <p>Essa etapa é essencial para fortalecer o deck e preparar a reta final do jogo com fusões fortes.</p>
     <ul>
-      <li>Depois de liberar os magos, farme o <b>Meadow Mage</b>.</li>
-      <li>O objetivo principal é conseguir <b>3x Meteor B. Dragon</b>.</li>
-      <li>Meteor B. Dragon facilita muito a reta final do jogo.</li>
-      <li>Continue farmando até vencer os magos com consistência.</li>
+      <li>Depois de liberar os magos, farme o <b>Meadow Mage</b> no Duelo Livre.</li>
+      <li>O objetivo principal é conseguir cartas para montar o <b>Meteor B. Dragon</b>, uma das melhores cartas para avançar com segurança.</li>
+      <li>Farme o <b>Meteor Dragon</b> e use-o como peça principal da fusão.</li>
+      <li>Também vale buscar a rota com <b>Meteor Skull Dragon</b>, usando cartas de fusão fortes para reforçar o deck enquanto tenta montar o Meteor B. Dragon.</li>
+      <li>Duele contra o <b>Jono 2nd</b> para tentar obter o <b>Red-eyes B. Dragon</b>.</li>
+      <li>Com o <b>Red-eyes B. Dragon</b> e o <b>Meteor Dragon</b>, faça a fusão: <br><br><b>Red-eyes B. Dragon + Meteor Dragon = Meteor B. Dragon</b>.</li>
+      <li>O <b>Meteor B. Dragon</b> tem <b>3500 ATK</b> e facilita muito os duelos contra os magos e a reta final.</li>
+      <li>Continue farmando até conseguir um deck consistente com múltiplas cartas fortes e fusões confiáveis.</li>
     </ul>
     <span class="routeTag">Meadow Mage</span>
+    <span class="routeTag">Jono 2nd</span>
+    <span class="routeTag">Meteor Dragon</span>
+    <span class="routeTag">Red-eyes B. Dragon</span>
+    <span class="routeTag">Meteor Skull Dragon</span>
     <span class="routeTag">Meteor B. Dragon</span>
     <span class="routeTag">3500 ATK</span>
   </div>
@@ -816,6 +824,51 @@ let selected = CARDS[0];
 let fullTable = false;
 let DROPS_BY_ID = {}; // Drops automáticos offline: não depende de internet ou localStorage
 
+
+function normalizeCardType(card){
+  if(!card) return;
+  const category = String(card['Card Category'] || '').toLowerCase();
+  const rawType = String(card['Type'] || '').toLowerCase();
+  const attr = String(card['Attribute'] || '').toLowerCase();
+
+  const isMagic =
+    category.includes('spell') ||
+    category.includes('magic') ||
+    attr.includes('spell') ||
+    attr.includes('magic') ||
+    rawType.includes('spell') ||
+    rawType.includes('magic') ||
+    rawType.includes('equip') ||
+    rawType.includes('field') ||
+    rawType.includes('ritual') ||
+    rawType.includes('continuous') ||
+    rawType.includes('quick');
+
+  if(isMagic){
+    card['Card Category'] = 'Magic';
+    card['Type'] = 'Magic';
+    if(!card['Attribute'] || attr === 'spell' || attr === 'magic') card['Attribute'] = 'MAGIC';
+    return;
+  }
+
+  const isTrap = category.includes('trap') || rawType.includes('trap') || attr.includes('trap');
+  if(isTrap){
+    card['Card Category'] = 'Trap';
+    card['Type'] = 'Trap';
+    if(!card['Attribute'] || attr === 'trap') card['Attribute'] = 'TRAP';
+    return;
+  }
+
+  if(category.includes('monster') || (!category && card['ATK'] !== '' && card['DEF'] !== '')){
+    card['Card Category'] = 'Monster';
+    card['Type'] = card['Type'] || 'Monster';
+  }
+}
+
+if(typeof CARDS !== 'undefined' && Array.isArray(CARDS)){
+  CARDS.forEach(normalizeCardType);
+}
+
 function esc(v){
   return String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 }
@@ -923,84 +976,77 @@ function normalizeSearchText(value){
 }
 
 function getCardSearchNames(card){
-  return [
-    card['Card Name (English)'],
-    card['Card Name (Portuguese)'],
-    card['Card Name (Português)'],
-    card['Card Name (PT)'],
-    card['Nome Português'],
-    card['Nome Portugues'],
-    card['Nome da Carta (Português)'],
-    card['Card Name (Spanish)'],
-    card['Card Name (Español)'],
-    card['Card Name (ES)'],
-    card['Nome Espanhol'],
-    card['Nombre Español'],
-    card['Nombre Espanol']
-  ].filter(v => String(v || '').trim());
+  // A busca principal usa somente o nome em inglês.
+  // Termos comuns em português são convertidos para inglês apenas para localizar a carta,
+  // mas o site continua exibindo todas as cartas com nomes em inglês.
+  return [card['Card Name (English)']].filter(v => String(v || '').trim());
 }
 
-function levenshteinDistance(a, b){
-  a = normalizeSearchText(a);
-  b = normalizeSearchText(b);
-  if(!a || !b) return Math.max(a.length, b.length);
-  const dp = Array.from({length:a.length+1}, () => Array(b.length+1).fill(0));
-  for(let i=0;i<=a.length;i++) dp[i][0]=i;
-  for(let j=0;j<=b.length;j++) dp[0][j]=j;
-  for(let i=1;i<=a.length;i++){
-    for(let j=1;j<=b.length;j++){
-      const cost = a[i-1] === b[j-1] ? 0 : 1;
-      dp[i][j] = Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost);
-    }
-  }
-  return dp[a.length][b.length];
-}
+const SEARCH_TRANSLATION_MAP = {
+  'dragao':'dragon',
+  'dragoes':'dragons',
+  'mago':'magician',
+  'magica':'magic',
+  'magicas':'magic',
+  'magia':'magic',
+  'magias':'magic',
+  'armadilha':'trap',
+  'armadilhas':'trap',
+  'equipamento':'equip',
+  'equipamentos':'equip',
+  'campo':'field',
+  'ritual':'ritual',
+  'rituais':'ritual',
+  'branco':'white',
+  'branca':'white',
+  'azul':'blue',
+  'olhos':'eyes',
+  'olho':'eye',
+  'negro':'black',
+  'negra':'black',
+  'escuro':'dark',
+  'escura':'dark',
+  'vermelho':'red',
+  'vermelha':'red',
+  'caveira':'skull',
+  'guerreiro':'warrior',
+  'guerreira':'warrior',
+  'besta':'beast',
+  'zumbi':'zombie',
+  'trovão':'thunder',
+  'trovao':'thunder',
+  'fada':'fairy',
+  'inseto':'insect',
+  'peixe':'fish',
+  'máquina':'machine',
+  'maquina':'machine',
+  'planta':'plant',
+  'demônio':'fiend',
+  'demonio':'fiend'
+};
 
-function fuzzyMatchText(query, text){
+function normalizeQueryForEnglishCards(query){
   const q = normalizeSearchText(query);
-  const t = normalizeSearchText(text);
-  if(!q) return true;
-  if(!t) return false;
-  if(t.includes(q)) return true;
-
-  const qWords = q.split(' ').filter(Boolean);
-  const tWords = t.split(' ').filter(Boolean);
-
-  return qWords.every(qw => {
-    if(qw.length <= 2) return tWords.some(tw => tw.startsWith(qw));
-    return tWords.some(tw => {
-      if(tw.includes(qw) || qw.includes(tw)) return true;
-      const limit = qw.length <= 5 ? 1 : 2;
-      return levenshteinDistance(qw, tw) <= limit;
-    });
-  });
+  if(!q) return '';
+  return q.split(' ').filter(Boolean).map(word => SEARCH_TRANSLATION_MAP[word] || word).join(' ');
 }
 
 function cardMatchesSearch(card, query){
-  const q = normalizeSearchText(query);
-  if(!q) return true;
+  const qOriginal = normalizeSearchText(query);
+  if(!qOriginal) return true;
 
-  const priorityFields = getCardSearchNames(card).join(' ');
-  if(fuzzyMatchText(q, priorityFields)) return true;
+  // Número, ID e password continuam pesquisáveis.
+  if(/^\d+$/.test(qOriginal)){
+    return [card.ID, card.Number, card.Password, card._hex]
+      .some(v => normalizeSearchText(v).includes(qOriginal));
+  }
 
-  const searchable = [
-    priorityFields,
-    card.ID,
-    card.Number,
-    card.Password,
-    card.Type,
-    card.Attribute,
-    card['Card Category'],
-    card['Guardian Star 1'],
-    card['Guardian Star 2'],
-    card['ATK'],
-    card['DEF']
-  ].join(' ');
+  const q = normalizeQueryForEnglishCards(query);
+  const terms = q.split(' ').filter(Boolean);
+  const englishName = normalizeSearchText(card['Card Name (English)']);
 
-  if(normalizeSearchText(searchable).includes(q)) return true;
-
-  // Busca inteligente mais ampla para termos digitados com pequenos erros.
-  return fuzzyMatchText(q, searchable);
+  // Filtro fiel ao que foi digitado: todas as palavras precisam existir no nome em inglês.
+  return terms.every(term => englishName.includes(term));
 }
 
 function highlightSearchText(value){
@@ -1044,10 +1090,9 @@ function fillSearchSuggestions(){
   if(!dl) return;
   const values = [];
   CARDS.forEach(card => {
-    getCardSearchNames(card).forEach(v => values.push(v));
+    if(card['Card Name (English)']) values.push(card['Card Name (English)']);
     if(card.Password) values.push(card.Password);
-    if(card.Type) values.push(card.Type);
-    if(card.Attribute) values.push(card.Attribute);
+    if(card.ID) values.push(card.ID);
   });
   const unique = [...new Set(values.map(v => String(v || '').trim()).filter(Boolean))].slice(0, 1800);
   dl.innerHTML = unique.map(v => `<option value="${esc(v)}"></option>`).join('');
@@ -3169,6 +3214,113 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   showPage('home');
 });
+</script>
+
+
+<script>
+/* Correção final Fabio Maran: tipos Magic/Trap e busca fiel pelo nome em inglês. */
+(function(){
+  function normalizeTxt(value){
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9#\s-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  var translate = {
+    'dragao':'dragon','dragoes':'dragon','dragões':'dragon',
+    'magica':'magic','magicas':'magic','magia':'magic','magias':'magic',
+    'armadilha':'trap','armadilhas':'trap',
+    'equipamento':'equip','equipamentos':'equip','campo':'field',
+    'branco':'white','branca':'white','azul':'blue','olhos':'eyes','olho':'eye',
+    'negro':'black','negra':'black','escuro':'dark','escura':'dark',
+    'vermelho':'red','vermelha':'red','trovão':'thunder','trovao':'thunder',
+    'guerreiro':'warrior','guerreira':'warrior','mago':'magician','maga':'magician',
+    'besta':'beast','zumbi':'zombie','fada':'fairy','inseto':'insect','peixe':'fish',
+    'maquina':'machine','máquina':'machine','planta':'plant','demonio':'fiend','demônio':'fiend'
+  };
+
+  window.normalizeCardType = function(card){
+    if(!card) return;
+    var category = String(card['Card Category'] || '').toLowerCase();
+    var rawType = String(card['Type'] || '').toLowerCase();
+    var attr = String(card['Attribute'] || '').toLowerCase();
+    var isMagic = category.indexOf('spell') >= 0 || category.indexOf('magic') >= 0 ||
+      attr.indexOf('spell') >= 0 || attr.indexOf('magic') >= 0 ||
+      rawType.indexOf('spell') >= 0 || rawType.indexOf('magic') >= 0 ||
+      rawType.indexOf('equip') >= 0 || rawType.indexOf('field') >= 0 ||
+      rawType.indexOf('ritual') >= 0 || rawType.indexOf('continuous') >= 0 || rawType.indexOf('quick') >= 0;
+    if(isMagic){
+      card['Card Category'] = 'Magic';
+      card['Type'] = 'Magic';
+      if(!card['Attribute'] || attr === 'spell' || attr === 'magic') card['Attribute'] = 'MAGIC';
+      return;
+    }
+    var isTrap = category.indexOf('trap') >= 0 || rawType.indexOf('trap') >= 0 || attr.indexOf('trap') >= 0;
+    if(isTrap){
+      card['Card Category'] = 'Trap';
+      card['Type'] = 'Trap';
+      if(!card['Attribute'] || attr === 'trap') card['Attribute'] = 'TRAP';
+      return;
+    }
+    if(category.indexOf('monster') >= 0){
+      card['Card Category'] = 'Monster';
+      card['Type'] = card['Type'] || 'Monster';
+    }
+  };
+
+  function queryToEnglishTerms(query){
+    return normalizeTxt(query).split(' ').filter(Boolean).map(function(w){ return translate[w] || w; });
+  }
+
+  window.cardMatchesSearch = function(card, query){
+    var q = normalizeTxt(query);
+    if(!q) return true;
+
+    if(/^\d+$/.test(q)){
+      return [card.ID, card.Number, card.Password, card._hex].some(function(v){
+        return normalizeTxt(v).indexOf(q) >= 0;
+      });
+    }
+
+    var name = normalizeTxt(card['Card Name (English)']);
+    var terms = queryToEnglishTerms(query);
+    return terms.every(function(term){ return name.indexOf(term) >= 0; });
+  };
+  try{ cardMatchesSearch = window.cardMatchesSearch; }catch(e){}
+
+  window.fillSearchSuggestions = function(){
+    var dl = document.getElementById('cardSearchSuggestions');
+    if(!dl || typeof CARDS === 'undefined') return;
+    var values = [];
+    CARDS.forEach(function(card){
+      if(card['Card Name (English)']) values.push(card['Card Name (English)']);
+      if(card.Password) values.push(card.Password);
+      if(card.ID) values.push(card.ID);
+    });
+    var unique = Array.from(new Set(values.map(function(v){ return String(v || '').trim(); }).filter(Boolean))).slice(0, 1800);
+    dl.innerHTML = unique.map(function(v){ return '<option value="' + String(v).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]; }) + '"></option>'; }).join('');
+  };
+  try{ fillSearchSuggestions = window.fillSearchSuggestions; }catch(e){}
+
+  if(typeof CARDS !== 'undefined' && Array.isArray(CARDS)) {
+    CARDS.forEach(function(card){
+      window.normalizeCardType(card);
+      var fixedName = normalizeTxt(card['Card Name (English)']);
+      if(fixedName === 'dragon capture jar'){
+        card['Card Category'] = 'Magic';
+        card['Type'] = 'Magic';
+        card['Attribute'] = 'MAGIC';
+      }
+    });
+  }
+  try{ if(typeof fillFilters === 'function') fillFilters(); }catch(e){}
+  try{ if(typeof renderTable === 'function') renderTable(); }catch(e){}
+  try{ if(typeof renderDetail === 'function') renderDetail(); }catch(e){}
+})();
 </script>
 
 </body>
