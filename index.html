@@ -227,7 +227,7 @@ tr:hover{background:var(--soft)}
 <section class="card">
   <h2>🔎 Todas as cartas</h2>
   <div class="toolbar">
-    <div><label>Buscar em todos os campos</label><input id="q" list="cardSearchSuggestions" placeholder="Ex: Blue-eyes, Dragon, Dark Magician, 89631139..." oninput="renderTable()"><datalist id="cardSearchSuggestions"></datalist></div>
+    <div><label>Pesquisar carta</label><input id="q" type="search" autocomplete="off" placeholder="Digite o nome da carta: Dragon, Dragão, Dragón..." oninput="renderTable()"></div>
     <div><label>Categoria</label><select id="catFilter" onchange="renderTable()"><option value="">Todas</option></select></div>
     <div><label>Atributo</label><select id="attrFilter" onchange="renderTable()"><option value="">Todos</option></select></div>
     <div><label>Tipo</label><select id="typeFilter" onchange="renderTable()"><option value="">Todos</option></select></div>
@@ -1035,17 +1035,12 @@ function cardMatchesSearch(card, query){
   const qOriginal = normalizeSearchText(query);
   if(!qOriginal) return true;
 
-  // Número, ID e password continuam pesquisáveis.
-  if(/^\d+$/.test(qOriginal)){
-    return [card.ID, card.Number, card.Password, card._hex]
-      .some(v => normalizeSearchText(v).includes(qOriginal));
-  }
-
   const q = normalizeQueryForEnglishCards(query);
   const terms = q.split(' ').filter(Boolean);
   const englishName = normalizeSearchText(card['Card Name (English)']);
 
-  // Filtro fiel ao que foi digitado: todas as palavras precisam existir no nome em inglês.
+  // Barra de pesquisa exclusiva para nomes de cartas.
+  // Aceita equivalências PT/EN/ES, mas sempre compara com o nome em inglês exibido no site.
   return terms.every(term => englishName.includes(term));
 }
 
@@ -1111,7 +1106,7 @@ function fillFilters(){
   setOptions('typeFilter', CARDS.map(c => c['Type']), 'Todos');
   setOptions('starFilter', CARDS.flatMap(c => [c['Guardian Star 1'], c['Guardian Star 2']]), 'Todas');
   document.getElementById('totalCount').textContent = CARDS.length;
-  fillSearchSuggestions();
+  // A barra agora é apenas pesquisa livre, sem lista automática de sugestões.
 }
 
 function isCardDropable(card){
@@ -3230,17 +3225,51 @@ document.addEventListener('DOMContentLoaded', ()=>{
       .trim();
   }
 
+  /* Busca multilíngue: permite digitar nomes/termos em PT-BR, EN e ES,
+     mas mantém a base e a exibição das cartas sempre em inglês. */
   var translate = {
-    'dragao':'dragon','dragoes':'dragon','dragões':'dragon',
-    'magica':'magic','magicas':'magic','magia':'magic','magias':'magic',
-    'armadilha':'trap','armadilhas':'trap',
-    'equipamento':'equip','equipamentos':'equip','campo':'field',
-    'branco':'white','branca':'white','azul':'blue','olhos':'eyes','olho':'eye',
-    'negro':'black','negra':'black','escuro':'dark','escura':'dark',
-    'vermelho':'red','vermelha':'red','trovão':'thunder','trovao':'thunder',
-    'guerreiro':'warrior','guerreira':'warrior','mago':'magician','maga':'magician',
-    'besta':'beast','zumbi':'zombie','fada':'fairy','inseto':'insect','peixe':'fish',
-    'maquina':'machine','máquina':'machine','planta':'plant','demonio':'fiend','demônio':'fiend'
+    // Português / Espanhol -> Inglês
+    'dragao':'dragon','dragoes':'dragon','dragon':'dragon','dragones':'dragon','dragón':'dragon','dragões':'dragon',
+    'magica':'magic','magicas':'magic','magia':'magic','magias':'magic','hechizo':'magic','hechizos':'magic',
+    'armadilha':'trap','armadilhas':'trap','trampa':'trap','trampas':'trap',
+    'equip':'equip','equipamento':'equip','equipamentos':'equip','equipo':'equip','equipar':'equip',
+    'campo':'field','terreno':'field','ritual':'ritual','continua':'continuous','continuo':'continuous','rapida':'quick','rapido':'quick',
+
+    'branco':'white','branca':'white','blanco':'white','blanca':'white','white':'white',
+    'azul':'blue','azuis':'blue','blue':'blue',
+    'olho':'eye','olhos':'eyes','ojo':'eye','ojos':'eyes','eye':'eye','eyes':'eyes',
+    'negro':'black','negra':'black','preto':'black','preta':'black','black':'black',
+    'escuro':'dark','escura':'dark','oscuro':'dark','oscura':'dark','dark':'dark',
+    'vermelho':'red','vermelha':'red','rojo':'red','roja':'red','red':'red',
+    'verde':'green','green':'green','amarelo':'yellow','amarillo':'yellow','yellow':'yellow',
+
+    'trovao':'thunder','trovão':'thunder','trueno':'thunder','thunder':'thunder',
+    'fogo':'fire','fuego':'fire','agua':'water','água':'water','aqua':'water','vento':'wind','viento':'wind',
+    'terra':'earth','tierra':'earth','luz':'light','light':'light','sombra':'dark','trevas':'dark',
+
+    'guerreiro':'warrior','guerreira':'warrior','guerrero':'warrior','guerrera':'warrior','warrior':'warrior',
+    'mago':'magician','maga':'magician','feiticeiro':'spellcaster','feiticeira':'spellcaster','magooscuro':'dark magician',
+    'besta':'beast','bestia':'beast','beast':'beast','fera':'beast',
+    'zumbi':'zombie','zombie':'zombie','morto':'zombie','muerto':'zombie',
+    'fada':'fairy','hada':'fairy','fairy':'fairy','inseto':'insect','insecto':'insect','insect':'insect',
+    'peixe':'fish','pez':'fish','fish':'fish','maquina':'machine','máquina':'machine','machine':'machine',
+    'planta':'plant','plant':'plant','demonio':'fiend','demônio':'fiend','diablo':'fiend','fiend':'fiend',
+    'reptil':'reptile','réptil':'reptile','reptile':'reptile','dinossauro':'dinosaur','dinosaurio':'dinosaur','dinosaur':'dinosaur',
+    'rocha':'rock','roca':'rock','rock':'rock','mar':'sea','serpente':'serpent','serpiente':'serpent',
+
+    'meteoro':'meteor','meteorito':'meteor','meteor':'meteor',
+    'caveira':'skull','calavera':'skull','craneo':'skull','cráneo':'skull','skull':'skull',
+    'olhosvermelhos':'red eyes','olhosazuis':'blue eyes','ojosrojos':'red eyes','ojosazules':'blue eyes',
+    'captura':'capture','capturar':'capture','capture':'capture','jarro':'jar','jarra':'jar','frasco':'jar','jarron':'jar','jarrón':'jar','jar':'jar',
+    'senhor':'lord','señor':'lord','rei':'king','rey':'king','rainha':'queen','reina':'queen',
+    'soldado':'soldier','soldier':'soldier','cavaleiro':'knight','caballero':'knight','knight':'knight',
+    'elfo':'elf','elfa':'elf','duende':'elf','elf':'elf',
+    'gigante':'giant','giant':'giant','bebê':'baby','bebe':'baby','baby':'baby'
+  };
+
+  var searchStopWords = {
+    'de':1,'do':1,'da':1,'dos':1,'das':1,'del':1,'la':1,'el':1,'los':1,'las':1,
+    'o':1,'a':1,'os':1,'as':1,'the':1,'of':1,'and':1,'e':1,'y':1
   };
 
   window.normalizeCardType = function(card){
@@ -3273,7 +3302,19 @@ document.addEventListener('DOMContentLoaded', ()=>{
   };
 
   function queryToEnglishTerms(query){
-    return normalizeTxt(query).split(' ').filter(Boolean).map(function(w){ return translate[w] || w; });
+    var clean = normalizeTxt(query).replace(/-/g, ' ');
+    var joined = clean.replace(/\s+/g, '');
+    var terms = clean.split(' ').filter(function(w){ return w && !searchStopWords[w]; });
+    var out = [];
+    if(translate[joined]) out = out.concat(String(translate[joined]).split(' '));
+    terms.forEach(function(w){
+      var t = translate[w] || w;
+      String(t).split(' ').forEach(function(part){
+        part = normalizeTxt(part);
+        if(part && !searchStopWords[part]) out.push(part);
+      });
+    });
+    return Array.from(new Set(out));
   }
 
   window.cardMatchesSearch = function(card, query){
@@ -3320,6 +3361,245 @@ document.addEventListener('DOMContentLoaded', ()=>{
   try{ if(typeof fillFilters === 'function') fillFilters(); }catch(e){}
   try{ if(typeof renderTable === 'function') renderTable(); }catch(e){}
   try{ if(typeof renderDetail === 'function') renderDetail(); }catch(e){}
+})();
+</script>
+
+
+<script>
+/* Base Fabio Maran: busca de cartas em Português/English/Español usando a planilha PT enviada, sem alterar os nomes exibidos em inglês. */
+(function(){
+  window.PT_CARD_NAMES_BY_ID = {"1":"Dragão Branco de Olhos Azuis","2":"Elfo Místico","3":"Gigante Hitotsu-me","4":"Dragãozinho","5":"Ryu Kishin","6":"Imp Selvagem","7":"Dragão Alado #1","8":"Homem Cogumelo","9":"Espectro Sombrio","10":"Dragão de Fogo da Terra Negra","11":"Braço de Espada do Dragão","12":"Guarda de Batalha do Pântano","13":"Tyhone","14":"Piloto de batalha","15":"Espadachim Flamejante","16":"Mago do Tempo","17":"Perna direita do Proibido","18":"Perna esquerda do Proibido","19":"Braço direito do Proibido","20":"Braço Esquerdo do Proibido","21":"Êxodo, o Proibido","22":"Crânio Invocado","23":"A Besta Verme Maligna","24":"Servo Caveira","25":"Diabinho","26":"Boi de batalha","27":"Guerreiro Castor","28":"Gruta do Ogro de Pedra #1","29":"Guerreiro da Montanha","30":"Guerreiro Zumbi","31":"Dragão Koumori","32":"Rei Rex de duas cabeças","33":"Juiz Homem","34":"Saggi, o Palhaço Sombrio","35":"Mago Negro","36":"O Cabelo de Cobra","37":"Gaia, a Campeã dos Dragões","38":"Gaia, a Cavaleira Feroz","39":"Maldição do Dragão","40":"Flautista do Dragão","41":"Guardião Celta","42":"Mago Ilusionista Sem Rosto","43":"Guerreiro Karbonala","44":"Boneca Rebelde","45":"Herói Oscillo #2","46":"Griffore","47":"Torike","48":"Sangan","49":"Inseto grande","50":"Inseto básico","51":"Lagarto Blindado","52":"Besouro Hércules","53":"Agulha Assassina","54":"Gokibore","55":"Pulga Gigante","56":"Larvas de Mariposa","57":"Grande Mariposa","58":"Kuriboh","59":"Cemitério de Mamutes","60":"Grande Branco","61":"Lobo","62":"Senhora Harpia","63":"Irmãs Harpia","64":"Machado de Tigre","65":"Presa de Prata","66":"Kojikocy","67":"Mariposa Perfeita e Suprema","68":"Garoozis","69":"Mil Dragões","70":"Kraken Demoníaco","71":"Medusa","72":"Casulo da Evolução","73":"Kairyu Shin","74":"Soldado Gigante de Pedra","75":"Planta carnívora","76":"Crocodilos","77":"Lutador","78":"Saqueador de Machado","79":"Megazowler","80":"Uraby","81":"Dragão Rastejante #2","82":"Dragão B. de olhos vermelhos","83":"Castelo das Ilusões Obscuras","84":"Ceifador das Cartas","85":"Rei de Yamimakai","86":"Barox","87":"Quimera Negra","88":"Guardião de Metal","89":"Tartaruga Catapulta","90":"Gyakutenno Megami","91":"Cavaleiro Místico","92":"Cavaleiro Raivoso","93":"Zanki","94":"Dragão Rastejante","95":"Palhaço grosseiro","96":"Zumbi blindado","97":"Zumbi Dragão","98":"Zumbi Palhaço","99":"Abóbora, o Rei dos Fantasmas","100":"Guerreiro de Batalha","101":"Asas da Chama Perversa","102":"Máscara da Escuridão","103":"Espelho de Mudança de Emprego","104":"Cortina dos Seres das Trevas","105":"Tomozauro","106":"Espírito dos Ventos","107":"Kageningen","108":"Cemitério e a Mão do Convite","109":"Deusa com o Terceiro Olho","110":"Herói do Oriente","111":"Doma, o Anjo do Silêncio","112":"Aquilo que se alimenta da vida","113":"Cinza escuro","114":"Chapéu Mágico Branco","115":"Mago Kamion","116":"Escorpião Pesadelo","117":"Espírito dos Livros","118":"Apoiador nas Sombras","119":"Julgamento dos Pesadelos","120":"Palhaço dos Sonhos","121":"Leão Adormecido","122":"Pergaminho do Dragão Yamatano","123":"Planta escura","124":"Ferramenta Antiga","125":"Pássaro da Fé","126":"Orion, o Rei da Batalha","127":"Ansatsu","128":"LaMoon","129":"Nemuriko","130":"Controle climático","131":"Outubro","132":"O 13º túmulo","133":"Charubin, o Cavaleiro do Fogo","134":"Corrente de Captura Mística","135":"Mão do Demônio","136":"Fantasma espirituoso","137":"Mão Misteriosa","138":"Estátua de Dragão","139":"Zumbi Prateado de Olhos Azuis","140":"Mestre dos Sapos","141":"Caracol Espinhoso","142":"Manipulador de Chamas","143":"Necrolancer, o Senhor do Tempo","144":"Djinn, o Observador do Vento","145":"O Ladrão Fantasma Enfeitiçante","146":"Templo das Caveiras","147":"Ovo Monstro","148":"A Sombra que Controla a Escuridão","149":"Senhor da Lâmpada","150":"Akihiron","151":"Rhaimundos da Espada Vermelha","152":"A Sombra Vermelha Derretida","153":"Dokuroizo, o Ceifador","154":"Ceifador de Fogo","155":"Larvas","156":"Armadura rígida","157":"Capim-de-fogo","158":"Devorador de Homens","159":"Bico Escavador","160":"Guerreiro M #1","161":"Guerreiro M #2","162":"Sabedoria Corrompida","163":"Lisark","164":"Senhor de Zemia","165":"A Mão do Julgamento","166":"Marionetista Misterioso","167":"Jarro antigo","168":"Dragão de Fogo Negro","169":"Rei das Trevas do Abismo","170":"Espírito da Harpa","171":"Olho Grande","172":"Armaill","173":"Prisioneiro das Trevas","174":"Furacão","175":"Cérebro Antigo","176":"Olho de Fogo","177":"Tartaruga Monstro","178":"Garra de Alcance","179":"Phantom Dewan","180":"Arlownay","181":"Tom escuro","182":"Palhaço Mascarado","183":"Bijuteria da Sorte","184":"Genin","185":"Eyearmor","186":"Reflexão Demoníaca #2","187":"Portão Deeg","188":"Synchar","189":"Fusionista","190":"Akakieisu","191":"LALA Li-oon","192":"Maça Chave","193":"Tartaruga Tigre","194":"Terra, a Terrível","195":"Doron","196":"Arma Knight","197":"Zumbi Toupeira Mecânica","198":"Amante Feliz","199":"Cavaleiro Pinguim","200":"Pequeno Dragão","201":"Panda Frenético","202":"Marmota Aérea da Nefastidade","203":"Fantasma","204":"Mabarrel","205":"Dorover","206":"Varas Duplas Longas #1","207":"Pássaro engraçado","208":"Pequeno Anjo","209":"Cutelo-alado","210":"Alma Hinotama","211":"Kaminarikozou","212":"Meotoko","213":"Água Madoor","214":"Kagemusha da Chama Azul","215":"Fantasma de Chamas","216":"Dríade","217":"B. Dragão Caveira","218":"Darkruler de Duas Bocas","219":"Solidão","220":"Feiticeiro Mascarado","221":"Kumootoko","222":"Demônio da Meia-Noite","223":"Serpente Marinha Rugidora","224":"Mestre das Armadilhas","225":"Espada Demoníaca","226":"Perseguidor de Crânios","227":"Hitodenchak","228":"Restos de madeira","229":"Ampulheta da Vida","230":"Peixes raros","231":"Palhaço de Madeira","232":"Madjinn Gunn","233":"Titã Sombrio do Terror","234":"Bela Caçadora de Cabeças","235":"Wodan, o habitante da floresta","236":"Guardião do Labirinto","237":"Haniwa","238":"Yashinoki","239":"Vishwar Randi","240":"O Drdek","241":"Assaltante Sombrio","242":"Vela do Destino","243":"Elemento Água","244":"Dissolverrock","245":"Meda Bat","246":"Aquele que caça almas","247":"Água da raiz","248":"Mestre e Especialista","249":"Omótica da Água","250":"Hyo","251":"Sereia Encantadora","252":"Nekogal #1","253":"Angelwitch","254":"Besta Embrionária","255":"Prevenir ratos","256":"Guerreiro Dimensional","257":"Tatu de pedra","258":"Rei das Feras dos Pântanos","259":"Feiticeiro Ancestral","260":"Rainha Lunar Elzaim","261":"Espelho Maligno","262":"O Pequeno Espadachim de Aile","263":"Gruta do Ogro de Pedra #2","264":"Elfo de Ovo Alado","265":"O Rei Furioso do Mar","266":"Princesa de Tsurugi","267":"Guerreiro Desconhecido do Demônio","268":"Sectariano dos Segredos","269":"Versago, o Destruidor","270":"Wetha","271":"Luz de Megirus","272":"Mavelus","273":"Árvore ancestral da iluminação","274":"Rei Fantasma Verde","275":"Atacante Terrestre Bugroth","276":"Raios e temperatura","277":"Ovo de Górgona","278":"Pequena Mariposa","279":"Rei Fog","280":"Protetor do Trono","281":"Palhaço Místico","282":"Ovelha Mística #2","283":"Holograma","284":"Tao, o Cantor","285":"Saqueador Serpente","286":"Porteiro","287":"Ogro da Sombra Negra","288":"Artista das Trevas","289":"Transformar Slime","290":"Enviado da Lua","291":"Fireyarou","292":"Kappa Psíquico","293":"Masaki, o Espadachim Lendário","294":"Dragonesa, a Cavaleira Perversa","295":"Planta biológica","296":"Dragão Escudo de Um Olho","297":"Soldado Cibernético do Mundo Sombrio","298":"Dragão Maligno com a Cabeça Ersatz","299":"Empregada Sonic","300":"Kurama","301":"Espada Lendária","302":"Espada da Destruição Sombria","303":"Energia escura","304":"Machado do Desespero","305":"Blindagem de Canhão Laser","306":"Armadura de inseto com canhão laser","307":"Luz do Elfo","308":"Presas de Besta","309":"Revestimento de aço","310":"Germes Vilões","311":"Pingente preto","312":"Arco e flecha de prata","313":"Chifre de Luz","314":"Chifre do Unicórnio","315":"Tesouro do Dragão","316":"Chicote elétrico","317":"Escudo Cibernético","318":"Egoísta Elegante","319":"Lua Mística","320":"Defesa de parada","321":"Aconchegante Malévolo","322":"Cristal Violeta","323":"Livro das Artes Secretas","324":"Revigoramento","325":"Fábrica de Conversão de Máquinas","326":"Aumentar a temperatura corporal","327":"Siga o vento","328":"Poder de Kaishin","329":"Pote de Captura de Dragão","330":"Floresta","331":"Terra devastada","332":"Montanha","333":"Sogen","334":"Umi","335":"Yami","336":"Buraco escuro","337":"Raigeki","338":"Curry Mooyan","339":"Remédio Vermelho","340":"Remédio Secreto do Goblin","341":"Alma do Puro","342":"Dian Keto, a Mestra da Cura","343":"Faíscas","344":"Hinotama","345":"Chama final","346":"Ookazi","347":"Fogo tremendo","348":"Espadas da Luz Reveladora","349":"Círculo Fascinante","350":"Luz que penetra a escuridão","351":"Yaranzo","352":"Kanan, a Mestra da Espada","353":"Takriminos","354":"Bicho de pelúcia","355":"Olho Megassônico","356":"Super Leão de Guerra","357":"Yamadron","358":"Seiyaryu","359":"Zumbis de três pernas","360":"Zera, o Manto","361":"Pinguim Voador","362":"Escudo do Milênio","363":"Presente da Fada","364":"Soldado do Brilho Negro","365":"Espelho do Demônio","366":"Parede do Labirinto","367":"Jirai Gumo","368":"Ghoul das Sombras","369":"Sombra da parede","370":"Tanque Labirinto","371":"Sanga do Trovão","372":"Kazejin","373":"Suijin","374":"Guardião do Portão","375":"Verme da Masmorra","376":"Domador de Monstros","377":"Alimentado por Ryu-kishin","378":"Espadachim","379":"La Jinn, o Gênio Místico","380":"Dragão Supremo de Olhos Azuis","381":"Jacaré de desenho animado","382":"Kaiser rude","383":"Dragão Papagaio","384":"Coelho Negro","385":"Bickuribox","386":"Dragão de estimação da Harpia","387":"Lâmpada Mística","388":"Máquina de pêndulo","389":"Giltia, o Cavaleiro D.","390":"Aranha Lançadora","391":"Zoa","392":"Metalzoa","393":"Comedor de Zona","394":"Escorpião de Aço","395":"Elfo Dançante","396":"Ocubeam","397":"Leghul","398":"Ooguchi","399":"Espadachim de uma terra estrangeira","400":"Imperador da Terra e do Mar","401":"Ushi Oni","402":"Olho de Monstro","403":"Leogun","404":"Tatsunootoshigo","405":"Espada Cortadora","406":"Yaiba Robô","407":"Machine King","408":"Giant Mech-soldier","409":"Metal Dragon","410":"Mechanical Spider","411":"Bat","412":"Giga-tech Wolf","413":"Cyber Soldier","414":"Shovel Crusher","415":"Mechanicalchacer","416":"Blocker","417":"Blast Juggler","418":"Golgoil","419":"Giganto","420":"Cyber-Stein","421":"Cyber Commander","422":"Jinzo #7","423":"Dice Armadillo","424":"Sky Dragon","425":"Thunder Dragon","426":"Stone D.","427":"Kaiser Dragon","428":"Magician of Faith","429":"Goddess of Whim","430":"Water Magician","431":"Ice Water","432":"Waterdragon Fairy","433":"Ancient Elf","434":"Beautiful Beast Trainer","435":"Water Girl","436":"White Dolphin","437":"Deepsea Shark","438":"Metal Fish","439":"Bottom Dweller","440":"7 Colored Fish","441":"Mech Bass","442":"Aqua Dragon","443":"Sea King Dragon","444":"Turu-Purun","445":"Guardian of the Sea","446":"Aqua Snake","447":"Giant Red Seasnake","448":"Spike Seadra","449":"30,000-Year White Turtle","450":"Kappa Avenger","451":"Kanikabuto","452":"Zarigun","453":"Millennium Golem","454":"Destroyer Golem","455":"Barrel Rock","456":"Minomushi Warrior","457":"Stone Ghost","458":"Kaminari Attack","459":"Tripwire Beast","460":"Bolt Escargot","461":"Bolt Penguin","462":"The Immortal of Thunder","463":"Electric Snake","464":"Wing Eagle","465":"Punished Eagle","466":"Skull Red Bird","467":"Crimson Sunbird","468":"Queen Bird","469":"Armed Ninja","470":"Magical Ghost","471":"Soul Hunter","472":"Air Eater","473":"Vermillion Sparrow","474":"Sea Kamen","475":"Sinister Serpent","476":"Ganigumo","477":"Alinsection","478":"Insect Soldiers of the Sky","479":"Cockroach Knight","480":"Kuwagata α","481":"Burglar","482":"Pragtical","483":"Garvas","484":"Ameba","485":"Korogashi","486":"Boo Koo","487":"Flower Wolf","488":"Rainbow Flower","489":"Barrel Lily","490":"Needle Ball","491":"Peacock","492":"Hoshiningen","493":"Maha Vailo","494":"Rainbow Marine Mermaid","495":"Musician King","496":"Wilmee","497":"Yado Karu","498":"Morinphen","499":"Kattapillar","500":"Dragon Seeker","501":"Man-eater Bug","502":"D. Human","503":"Turtle Raccoon","504":"Fungi of the Musk","505":"Prisman","506":"Gale Dogra","507":"Crazy Fish","508":"Cyber Saurus","509":"Bracchio-raidus","510":"Laughing Flower","511":"Bean Soldier","512":"Cannon Soldier","513":"Guardian of the Throne Room","514":"Brave Scizzar","515":"The Statue of Easter Island","516":"Muka Muka","517":"Sand Stone","518":"Boulder Tortoise","519":"Fire Kraken","520":"Turtle Bird","521":"Skullbird","522":"Monstrous Bird","523":"The Bistro Butcher","524":"Star Boy","525":"Spirit of the Mountain","526":"Neck Hunter","527":"Milus Radiant","528":"Togex","529":"Flame Cerebrus","530":"Eldeen","531":"Mystical Sand","532":"Gemini Elf","533":"Kwagar Hercules","534":"Minar","535":"Kamakiriman","536":"Mechaleon","537":"Mega Thunderball","538":"Niwatori","539":"Corroding Shark","540":"Skelengel","541":"Hane-Hane","542":"Misairuzame","543":"Tongyo","544":"Dharma Cannon","545":"Skelgon","546":"Wow Warrior","547":"Griggle","548":"Bone Mouse","549":"Frog the Jam","550":"Behegon","551":"Dark Elf","552":"Winged Dragon #2","553":"Mushroom Man #2","554":"Lava Battleguard","555":"Tyhone #2","556":"The Wandering Doomed","557":"Steel Ogre Grotto #1","558":"Pot the Trick","559":"Oscillo Hero","560":"Invader from Another Dimension","561":"Lesser Dragon","562":"Needle Worm","563":"Wretched Ghost of the Attic","564":"Great Mammoth of Goldfine","565":"Man-eating Black Shark","566":"Yormungarde","567":"Darkworld Thorns","568":"Anthrosaurus","569":"Drooling Lizard","570":"Trakadon","571":"B. Dragon Jungle King","572":"Empress Judge","573":"Little D","574":"Witch of the Black Forest","575":"Ancient One of the Deep Forest","576":"Giant Scorpion of the Tundra","577":"Crow Goblin","578":"Leo Wizard","579":"Abyss Flower","580":"Patrol Robo","581":"Takuhee","582":"Dark Witch","583":"Weather Report","584":"Binding Chain","585":"Mechanical Snail","586":"Greenkappa","587":"Mon Larvas","588":"Living Vase","589":"Tentacle Plant","590":"Beaked Snake","591":"Morphing Jar","592":"Muse-A","593":"Giant Turtle Who Feeds on Flames","594":"Rose Spectre of Dunn","595":"Fiend Refrection #1","596":"Ghoul with an Appetite","597":"Pale Beast","598":"Little Chimera","599":"Violent Rain","600":"Key Mace #2","601":"Tenderness","602":"Penguin Soldier","603":"Fairy Dragon","604":"Obese Marmot of Nefariousness","605":"Liquid Beast","606":"Twin Long Rods 2","607":"Great Bill","608":"Shining Friendship","609":"Bladefly","610":"Electric Lizard","611":"Hiro's Shadow Scout","612":"Lady of Faith","613":"Twin-headed Thunder Dragon","614":"Hunter Spider","615":"Armored Starfish","616":"Hourglass of Courage","617":"Marine Beast","618":"Warrior of Tradition","619":"Rock Spirit","620":"Snakeyashi","621":"Succubus Knight","622":"Ill Witch","623":"The Thing That Hides In the Mud","624":"High Tide Gyojin","625":"Fairy of the Fountain","626":"Amazon of the Seas","627":"Nekogal #2","628":"Witch's Apprentice","629":"Armored Rat","630":"Ancient Lizard Warrior","631":"Maiden of the Moonlight","632":"Stone Ogre Grotto","633":"Winged Egg of New Life","634":"Night Lizard","635":"Queen's Double","636":"Blue-winged Crown","637":"Trent","638":"Queen of Autumn Leaves","639":"Amphibious Bugroth","640":"Acid Crawler","641":"Invader of the Throne","642":"Mystical Sheep #1","643":"Disk Magician","644":"Flame Viper","645":"Royal Guard","646":"Gruesome Goo","647":"Hyosube","648":"Machine Attacker","649":"Hibikime","650":"Whiptail Crow","651":"Kunai with Chain","652":"Magical Labyrinth","653":"Warrior Elimination","654":"Salamandra","655":"Cursebreaker","656":"Eternal Rest","657":"Megamorph","658":"Metalmorph","659":"Winged Trumpeter","660":"Stain Storm","661":"Crush Card","662":"Eradicating Aerosol","663":"Breath of Light","664":"Eternal Draught","665":"Curse of Millennium Shield","666":"Yamadron Ritual","667":"Gate Guardian Ritual","668":"Bright Castle","669":"Shadow Spell","670":"Black Luster Ritual","671":"Zera Ritual","672":"Harpie's Feather Duster","673":"War-lion Ritual","674":"Beastry Mirror Ritual","675":"Ultimate Dragon","676":"Commencement Dance","677":"Hamburger Recipe","678":"Revival of Sennen Genjin","679":"Novox's Prayer","680":"Curse of Tri-Horned Dragon","681":"House of Adhesive Tape","682":"Eatgaboon","683":"Bear Trap","684":"Invisible Wire","685":"Acid Trap Hole","686":"Widespread Ruin","687":"Goblin Fan","688":"Bad Reaction to Simochi","689":"Reverse Trap","690":"Fake Trap","691":"Revived of Serpent Night Dragon","692":"Turtle Oath","693":"Contruct of Mask","694":"Resurrection of Chakra","695":"Puppet Ritual","696":"Javelin Beetle Pact","697":"Garma Sword Oath","698":"Cosmo Queen's Prayer","699":"Revival of Skeleton Rider","700":"Fortress Whale's Oath","701":"Performance of Sword","702":"Hungry Burger","703":"Sengenjin","704":"Skull Guardian","705":"Tri-horned Dragon","706":"Serpent Night Dragon","707":"Skull Knight","708":"Cosmo Queen","709":"Chakra","710":"Crab Turtle","711":"Mikazukinoyaiba","712":"Meteor Dragon","713":"Meteor B. Dragon","714":"Firewing Pegasus","715":"Psycho-Puppet","716":"Garma Sword","717":"Javelin Beetle","718":"Fortress Whale","719":"Dokurorider","720":"Mask of Shine & Dark","721":"Dark Magic Ritual","722":"Magician of Black Chaos"};
+
+  function normSearch(value){
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9#\s-]/g, ' ')
+      .replace(/[-_]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  var termMap = {
+    // PT/ES -> EN para manter compatibilidade com busca por termos gerais
+    'dragao':'dragon','dragoes':'dragon','dragon':'dragon','dragones':'dragon','dragonzinho':'baby dragon',
+    'branco':'white','branca':'white','blanco':'white','blanca':'white',
+    'azul':'blue','azuis':'blue','azules':'blue',
+    'olho':'eye','olhos':'eyes','ojo':'eye','ojos':'eyes',
+    'vermelho':'red','vermelha':'red','rojo':'red','roja':'red',
+    'negro':'black','negra':'black','preto':'black','preta':'black','oscuro':'dark','oscura':'dark','escuro':'dark','escura':'dark',
+    'mago':'magician','maga':'magician','feiticeiro':'spellcaster','feiticeira':'spellcaster','hechicero':'spellcaster','hechicera':'spellcaster',
+    'guerreiro':'warrior','guerreira':'warrior','guerrero':'warrior','guerrera':'warrior',
+    'cavaleiro':'knight','caballero':'knight','soldado':'soldier','soldier':'soldier',
+    'caveira':'skull','calavera':'skull','cranio':'skull','craneo':'skull',
+    'elfo':'elf','elfa':'elf','duende':'elf',
+    'gigante':'giant','bebe':'baby','baby':'baby',
+    'fada':'fairy','hada':'fairy','besta':'beast','bestia':'beast','fera':'beast',
+    'zumbi':'zombie','muerto':'zombie','morto':'zombie',
+    'inseto':'insect','insecto':'insect','peixe':'fish','pez':'fish',
+    'maquina':'machine','planta':'plant','demonio':'fiend','diablo':'fiend',
+    'reptil':'reptile','dinossauro':'dinosaur','dinosaurio':'dinosaur','rocha':'rock','roca':'rock',
+    'trovao':'thunder','trueno':'thunder','fogo':'fire','fuego':'fire','agua':'water','aqua':'water','vento':'wind','viento':'wind','terra':'earth','tierra':'earth','luz':'light','trevas':'dark','sombra':'dark',
+    'meteoro':'meteor','meteorito':'meteor','captura':'capture','capturar':'capture','jarro':'jar','jarra':'jar','frasco':'jar','jarron':'jar',
+    'senhor':'lord','senor':'lord','rei':'king','rey':'king','rainha':'queen','reina':'queen',
+    'magica':'magic','magicas':'magic','magia':'magic','magias':'magic','hechizo':'magic','hechizos':'magic',
+    'armadilha':'trap','armadilhas':'trap','trampa':'trap','trampas':'trap','equipamento':'equip','equipamentos':'equip','equipo':'equip','campo':'field','terreno':'field','ritual':'ritual'
+  };
+
+  var stop = {'de':1,'do':1,'da':1,'dos':1,'das':1,'del':1,'la':1,'el':1,'los':1,'las':1,'o':1,'a':1,'os':1,'as':1,'the':1,'of':1,'and':1,'e':1,'y':1};
+
+  function getCardId(card){
+    return String(Number(card && (card._idnum || card.ID || card.Number) || 0));
+  }
+
+  function translatedTerms(query){
+    var clean = normSearch(query);
+    var joined = clean.replace(/\s+/g, '');
+    var out = [];
+    if(termMap[joined]) out = out.concat(String(termMap[joined]).split(' '));
+    clean.split(' ').forEach(function(w){
+      if(!w || stop[w]) return;
+      String(termMap[w] || w).split(' ').forEach(function(part){
+        part = normSearch(part);
+        if(part && !stop[part]) out.push(part);
+      });
+    });
+    return Array.from(new Set(out));
+  }
+
+  window.cardMatchesSearch = function(card, query){
+    var q = normSearch(query);
+    if(!q) return true;
+
+    // Números continuam funcionando somente como pesquisa: ID, Number, Password e HEX.
+    if(/^\d+$/.test(q)){
+      return [card.ID, card.Number, card.Password, card._hex].some(function(v){
+        return normSearch(v).indexOf(q) >= 0;
+      });
+    }
+
+    var id = getCardId(card);
+    var enName = normSearch(card['Card Name (English)']);
+    var ptName = normSearch(window.PT_CARD_NAMES_BY_ID[id] || '');
+
+    // Pesquisa direta por nome completo/parcial em inglês ou português da planilha.
+    if(enName.indexOf(q) >= 0 || ptName.indexOf(q) >= 0) return true;
+
+    // Pesquisa termo a termo: permite digitar parte do nome em PT/EN/ES.
+    var originalTerms = q.split(' ').filter(function(w){ return w && !stop[w]; });
+    var directTermsOk = originalTerms.length && originalTerms.every(function(t){
+      return enName.indexOf(t) >= 0 || ptName.indexOf(t) >= 0;
+    });
+    if(directTermsOk) return true;
+
+    var terms = translatedTerms(query);
+    return terms.length && terms.every(function(t){ return enName.indexOf(t) >= 0; });
+  };
+  try{ cardMatchesSearch = window.cardMatchesSearch; }catch(e){}
+
+  window.fillSearchSuggestions = function(){
+    var dl = document.getElementById('cardSearchSuggestions');
+    if(!dl || typeof CARDS === 'undefined') return;
+    var values = [];
+    CARDS.forEach(function(card){
+      var id = getCardId(card);
+      if(card['Card Name (English)']) values.push(card['Card Name (English)']);
+      if(window.PT_CARD_NAMES_BY_ID[id]) values.push(window.PT_CARD_NAMES_BY_ID[id]);
+      if(card.Password) values.push(card.Password);
+      if(card.ID) values.push(card.ID);
+    });
+    var unique = Array.from(new Set(values.map(function(v){ return String(v || '').trim(); }).filter(Boolean))).slice(0, 2600);
+    dl.innerHTML = unique.map(function(v){
+      return '<option value="' + String(v).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]; }) + '"></option>';
+    }).join('');
+  };
+  try{ fillSearchSuggestions = window.fillSearchSuggestions; }catch(e){}
+
+  try{ if(typeof fillSearchSuggestions === 'function') fillSearchSuggestions(); }catch(e){}
+  try{ if(typeof renderTable === 'function') renderTable(); }catch(e){}
+})();
+</script>
+
+
+<script>
+/* Atualização final Fabio Maran: lista de busca PT-BR revisada pela planilha enviada.
+   A exibição continua em inglês; os nomes em português funcionam apenas como base de pesquisa. */
+(function(){
+  window.PT_CARD_NAMES_BY_ID = {"1":"Dragão Branco de Olhos Azuis","2":"Elfo Místico","3":"Gigante Hitotsu-me","4":"Dragãozinho","5":"Ryu Kishin","6":"Imp Selvagem","7":"Dragão Alado #1","8":"Homem Cogumelo","9":"Espectro Sombrio","10":"Dragão de Fogo da Terra Negra","11":"Braço de Espada do Dragão","12":"Guarda de Batalha do Pântano","13":"Tyhone","14":"Piloto de batalha","15":"Espadachim Flamejante","16":"Mago do Tempo","17":"Perna direita do Proibido","18":"Perna esquerda do Proibido","19":"Braço direito do Proibido","20":"Braço Esquerdo do Proibido","21":"Êxodo, o Proibido","22":"Crânio Invocado","23":"A Besta Verme Maligna","24":"Servo Caveira","25":"Diabinho","26":"Boi de batalha","27":"Guerreiro Castor","28":"Gruta do Ogro de Pedra #1","29":"Guerreiro da Montanha","30":"Guerreiro Zumbi","31":"Dragão Koumori","32":"Rei Rex de duas cabeças","33":"Juiz Homem","34":"Saggi, o Palhaço Sombrio","35":"Mago Negro","36":"O Cabelo de Cobra","37":"Gaia, a Campeã dos Dragões","38":"Gaia, a Cavaleira Feroz","39":"Maldição do Dragão","40":"Flautista do Dragão","41":"Guardião Celta","42":"Mago Ilusionista Sem Rosto","43":"Guerreiro Karbonala","44":"Boneca Rebelde","45":"Herói Oscillo #2","46":"Griffore","47":"Torike","48":"Sangan","49":"Inseto grande","50":"Inseto básico","51":"Lagarto Blindado","52":"Besouro Hércules","53":"Agulha Assassina","54":"Gokibore","55":"Pulga Gigante","56":"Larvas de Mariposa","57":"Grande Mariposa","58":"Kuriboh","59":"Cemitério de Mamutes","60":"Grande Branco","61":"Lobo","62":"Senhora Harpia","63":"Irmãs Harpia","64":"Machado de Tigre","65":"Presa de Prata","66":"Kojikocy","67":"Mariposa Perfeita e Suprema","68":"Garoozis","69":"Mil Dragões","70":"Kraken Demoníaco","71":"Medusa","72":"Casulo da Evolução","73":"Kairyu Shin","74":"Soldado Gigante de Pedra","75":"Planta carnívora","76":"Crocodilos","77":"Lutador","78":"Saqueador de Machado","79":"Megazowler","80":"Uraby","81":"Dragão Rastejante #2","82":"Dragão Negro de Olhos Vermelhos","83":"Castelo das Ilusões Obscuras","84":"Ceifador das Cartas","85":"Rei de Yamimakai","86":"Barox","87":"Quimera Negra","88":"Guardião de Metal","89":"Tartaruga Catapulta","90":"Gyakutenno Megami","91":"Cavaleiro Místico","92":"Cavaleiro Raivoso","93":"Zanki","94":"Dragão Rastejante","95":"Palhaço grosseiro","96":"Zumbi blindado","97":"Zumbi Dragão","98":"Zumbi Palhaço","99":"Abóbora, o Rei dos Fantasmas","100":"Guerreiro de Batalha","101":"Asas da Chama Perversa","102":"Máscara da Escuridão","103":"Espelho de Mudança de Emprego","104":"Cortina dos Seres das Trevas","105":"Tomozauro","106":"Espírito dos Ventos","107":"Kageningen","108":"Cemitério e a Mão do Convite","109":"Deusa com o Terceiro Olho","110":"Herói do Oriente","111":"Doma, o Anjo do Silêncio","112":"Aquilo que se alimenta da vida","113":"Cinza escuro","114":"Chapéu Mágico Branco","115":"Mago Kamion","116":"Escorpião Pesadelo","117":"Espírito dos Livros","118":"Apoiador nas Sombras","119":"Julgamento dos Pesadelos","120":"Palhaço dos Sonhos","121":"Leão Adormecido","122":"Pergaminho do Dragão Yamatano","123":"Planta escura","124":"Ferramenta Antiga","125":"Pássaro da Fé","126":"Orion, o Rei da Batalha","127":"Ansatsu","128":"LaMoon","129":"Nemuriko","130":"Controle climático","131":"Outubro","132":"O 13º túmulo","133":"Charubin, o Cavaleiro do Fogo","134":"Corrente de Captura Mística","135":"Mão do Demônio","136":"Fantasma espirituoso","137":"Mão Misteriosa","138":"Estátua de Dragão","139":"Zumbi Prateado de Olhos Azuis","140":"Mestre dos Sapos","141":"Caracol Espinhoso","142":"Manipulador de Chamas","143":"Necrolancer, o Senhor do Tempo","144":"Djinn, o Observador do Vento","145":"O Ladrão Fantasma Enfeitiçante","146":"Templo das Caveiras","147":"Ovo Monstro","148":"A Sombra que Controla a Escuridão","149":"Senhor da Lâmpada","150":"Akihiron","151":"Rhaimundos da Espada Vermelha","152":"A Sombra Vermelha Derretida","153":"Dokuroizo, o Ceifador","154":"Ceifador de Fogo","155":"Larvas","156":"Armadura rígida","157":"Capim-de-fogo","158":"Devorador de Homens","159":"Bico Escavador","160":"Guerreiro M #1","161":"Guerreiro M #2","162":"Sabedoria Corrompida","163":"Lisark","164":"Senhor de Zemia","165":"A Mão do Julgamento","166":"Marionetista Misterioso","167":"Jarro antigo","168":"Dragão de Fogo Negro","169":"Rei das Trevas do Abismo","170":"Espírito da Harpa","171":"Olho Grande","172":"Armaill","173":"Prisioneiro das Trevas","174":"Furacão","175":"Cérebro Antigo","176":"Olho de Fogo","177":"Tartaruga Monstro","178":"Garra de Alcance","179":"Phantom Dewan","180":"Arlownay","181":"Tom escuro","182":"Palhaço Mascarado","183":"Bijuteria da Sorte","184":"Genin","185":"Eyearmor","186":"Reflexão Demoníaca #2","187":"Portão Deeg","188":"Synchar","189":"Fusionista","190":"Akakieisu","191":"LALA Li-oon","192":"Maça Chave","193":"Tartaruga Tigre","194":"Terra, a Terrível","195":"Doron","196":"Arma Knight","197":"Zumbi Toupeira Mecânica","198":"Amante Feliz","199":"Cavaleiro Pinguim","200":"Pequeno Dragão","201":"Panda Frenético","202":"Marmota Aérea da Nefastidade","203":"Fantasma","204":"Mabarrel","205":"Dorover","206":"Varas Duplas Longas #1","207":"Pássaro engraçado","208":"Pequeno Anjo","209":"Cutelo-alado","210":"Alma Hinotama","211":"Kaminarikozou","212":"Meotoko","213":"Água Madoor","214":"Kagemusha da Chama Azul","215":"Fantasma de Chamas","216":"Dríade","217":"B. Dragão Caveira","218":"Darkruler de Duas Bocas","219":"Solidão","220":"Feiticeiro Mascarado","221":"Kumootoko","222":"Demônio da Meia-Noite","223":"Serpente Marinha Rugidora","224":"Mestre das Armadilhas","225":"Espada Demoníaca","226":"Perseguidor de Crânios","227":"Hitodenchak","228":"Restos de madeira","229":"Ampulheta da Vida","230":"Peixes raros","231":"Palhaço de Madeira","232":"Madjinn Gunn","233":"Titã Sombrio do Terror","234":"Bela Caçadora de Cabeças","235":"Wodan, o habitante da floresta","236":"Guardião do Labirinto","237":"Haniwa","238":"Yashinoki","239":"Vishwar Randi","240":"O Drdek","241":"Assaltante Sombrio","242":"Vela do Destino","243":"Elemento Água","244":"Dissolverrock","245":"Meda Bat","246":"Aquele que caça almas","247":"Água da raiz","248":"Mestre e Especialista","249":"Omótica da Água","250":"Hyo","251":"Sereia Encantadora","252":"Nekogal #1","253":"Angelwitch","254":"Besta Embrionária","255":"Prevenir ratos","256":"Guerreiro Dimensional","257":"Tatu de pedra","258":"Rei das Feras dos Pântanos","259":"Feiticeiro Ancestral","260":"Rainha Lunar Elzaim","261":"Espelho Maligno","262":"O Pequeno Espadachim de Aile","263":"Gruta do Ogro de Pedra #2","264":"Elfo de Ovo Alado","265":"O Rei Furioso do Mar","266":"Princesa de Tsurugi","267":"Guerreiro Desconhecido do Demônio","268":"Sectariano dos Segredos","269":"Versago, o Destruidor","270":"Wetha","271":"Luz de Megirus","272":"Mavelus","273":"Árvore ancestral da iluminação","274":"Rei Fantasma Verde","275":"Atacante Terrestre Bugroth","276":"Raios e temperatura","277":"Ovo de Górgona","278":"Pequena Mariposa","279":"Rei Fog","280":"Protetor do Trono","281":"Palhaço Místico","282":"Ovelha Mística #2","283":"Holograma","284":"Tao, o Cantor","285":"Saqueador Serpente","286":"Porteiro","287":"Ogro da Sombra Negra","288":"Artista das Trevas","289":"Transformar Slime","290":"Enviado da Lua","291":"Fireyarou","292":"Kappa Psíquico","293":"Masaki, o Espadachim Lendário","294":"Dragonesa, a Cavaleira Perversa","295":"Planta biológica","296":"Dragão Escudo de Um Olho","297":"Soldado Cibernético do Mundo Sombrio","298":"Dragão Maligno com a Cabeça Ersatz","299":"Empregada Sonic","300":"Kurama","301":"Espada Lendária","302":"Espada da Destruição Sombria","303":"Energia escura","304":"Machado do Desespero","305":"Blindagem de Canhão Laser","306":"Armadura de inseto com canhão laser","307":"Luz do Elfo","308":"Presas de Besta","309":"Revestimento de aço","310":"Germes Vilões","311":"Pingente preto","312":"Arco e flecha de prata","313":"Chifre de Luz","314":"Chifre do Unicórnio","315":"Tesouro do Dragão","316":"Chicote elétrico","317":"Escudo Cibernético","318":"Egoísta Elegante","319":"Lua Mística","320":"Defesa de parada","321":"Aconchegante Malévolo","322":"Cristal Violeta","323":"Livro das Artes Secretas","324":"Revigoramento","325":"Fábrica de Conversão de Máquinas","326":"Aumentar a temperatura corporal","327":"Siga o vento","328":"Poder de Kaishin","329":"Pote de Captura de Dragão","330":"Floresta","331":"Terra devastada","332":"Montanha","333":"Sogen","334":"Umi","335":"Yami","336":"Buraco escuro","337":"Raigeki","338":"Curry Mooyan","339":"Remédio Vermelho","340":"Remédio Secreto do Goblin","341":"Alma do Puro","342":"Dian Keto, a Mestra da Cura","343":"Faíscas","344":"Hinotama","345":"Chama final","346":"Ookazi","347":"Fogo tremendo","348":"Espadas da Luz Reveladora","349":"Círculo Fascinante","350":"Luz que penetra a escuridão","351":"Yaranzo","352":"Kanan, a Mestra da Espada","353":"Takriminos","354":"Bicho de pelúcia","355":"Olho Megassônico","356":"Super Leão de Guerra","357":"Yamadron","358":"Seiyaryu","359":"Zumbis de três pernas","360":"Zera, o Manto","361":"Pinguim Voador","362":"Escudo do Milênio","363":"Presente da Fada","364":"Soldado do Brilho Negro","365":"Espelho do Demônio","366":"Parede do Labirinto","367":"Jirai Gumo","368":"Ghoul das Sombras","369":"Sombra da parede","370":"Tanque Labirinto","371":"Sanga do Trovão","372":"Kazejin","373":"Suijin","374":"Guardião do Portão","375":"Verme da Masmorra","376":"Domador de Monstros","377":"Alimentado por Ryu-kishin","378":"Espadachim","379":"La Jinn, o Gênio Místico","380":"Dragão Supremo de Olhos Azuis","381":"Jacaré de desenho animado","382":"Kaiser rude","383":"Dragão Papagaio","384":"Coelho Negro","385":"Bickuribox","386":"Dragão de estimação da Harpia","387":"Lâmpada Mística","388":"Máquina de pêndulo","389":"Giltia, o Cavaleiro D.","390":"Aranha Lançadora","391":"Zoa","392":"Metalzoa","393":"Comedor de Zona","394":"Escorpião de Aço","395":"Elfo Dançante","396":"Ocubeam","397":"Leghul","398":"Ooguchi","399":"Espadachim de uma terra estrangeira","400":"Imperador da Terra e do Mar","401":"Ushi Oni","402":"Olho de Monstro","403":"Leogun","404":"Tatsunootoshigo","405":"Espada Cortadora","406":"Yaiba Robô","407":"Machine King","408":"Giant Mech-soldier","409":"Metal Dragon","410":"Mechanical Spider","411":"Bat","412":"Giga-tech Wolf","413":"Cyber Soldier","414":"Shovel Crusher","415":"Mechanicalchacer","416":"Blocker","417":"Blast Juggler","418":"Golgoil","419":"Giganto","420":"Cyber-Stein","421":"Cyber Commander","422":"Jinzo #7","423":"Dice Armadillo","424":"Sky Dragon","425":"Thunder Dragon","426":"Stone D.","427":"Kaiser Dragon","428":"Magician of Faith","429":"Goddess of Whim","430":"Water Magician","431":"Ice Water","432":"Waterdragon Fairy","433":"Ancient Elf","434":"Beautiful Beast Trainer","435":"Water Girl","436":"White Dolphin","437":"Deepsea Shark","438":"Metal Fish","439":"Bottom Dweller","440":"7 Colored Fish","441":"Mech Bass","442":"Aqua Dragon","443":"Sea King Dragon","444":"Turu-Purun","445":"Guardian of the Sea","446":"Aqua Snake","447":"Giant Red Seasnake","448":"Spike Seadra","449":"30,000-Year White Turtle","450":"Kappa Avenger","451":"Kanikabuto","452":"Zarigun","453":"Millennium Golem","454":"Destroyer Golem","455":"Barrel Rock","456":"Minomushi Warrior","457":"Stone Ghost","458":"Kaminari Attack","459":"Tripwire Beast","460":"Bolt Escargot","461":"Bolt Penguin","462":"The Immortal of Thunder","463":"Electric Snake","464":"Wing Eagle","465":"Punished Eagle","466":"Skull Red Bird","467":"Crimson Sunbird","468":"Queen Bird","469":"Armed Ninja","470":"Magical Ghost","471":"Soul Hunter","472":"Air Eater","473":"Vermillion Sparrow","474":"Sea Kamen","475":"Sinister Serpent","476":"Ganigumo","477":"Alinsection","478":"Insect Soldiers of the Sky","479":"Cockroach Knight","480":"Kuwagata α","481":"Burglar","482":"Pragtical","483":"Garvas","484":"Ameba","485":"Korogashi","486":"Boo Koo","487":"Flower Wolf","488":"Rainbow Flower","489":"Barrel Lily","490":"Needle Ball","491":"Peacock","492":"Hoshiningen","493":"Maha Vailo","494":"Rainbow Marine Mermaid","495":"Musician King","496":"Wilmee","497":"Yado Karu","498":"Morinphen","499":"Kattapillar","500":"Dragon Seeker","501":"Man-eater Bug","502":"D. Human","503":"Turtle Raccoon","504":"Fungi of the Musk","505":"Prisman","506":"Gale Dogra","507":"Crazy Fish","508":"Cyber Saurus","509":"Bracchio-raidus","510":"Laughing Flower","511":"Bean Soldier","512":"Cannon Soldier","513":"Guardian of the Throne Room","514":"Brave Scizzar","515":"The Statue of Easter Island","516":"Muka Muka","517":"Sand Stone","518":"Boulder Tortoise","519":"Fire Kraken","520":"Turtle Bird","521":"Skullbird","522":"Monstrous Bird","523":"The Bistro Butcher","524":"Star Boy","525":"Spirit of the Mountain","526":"Neck Hunter","527":"Milus Radiant","528":"Togex","529":"Flame Cerebrus","530":"Eldeen","531":"Mystical Sand","532":"Gemini Elf","533":"Kwagar Hercules","534":"Minar","535":"Kamakiriman","536":"Mechaleon","537":"Mega Thunderball","538":"Niwatori","539":"Corroding Shark","540":"Skelengel","541":"Hane-Hane","542":"Misairuzame","543":"Tongyo","544":"Dharma Cannon","545":"Skelgon","546":"Wow Warrior","547":"Griggle","548":"Bone Mouse","549":"Frog the Jam","550":"Behegon","551":"Dark Elf","552":"Winged Dragon #2","553":"Mushroom Man #2","554":"Lava Battleguard","555":"Tyhone #2","556":"The Wandering Doomed","557":"Steel Ogre Grotto #1","558":"Pot the Trick","559":"Oscillo Hero","560":"Invader from Another Dimension","561":"Lesser Dragon","562":"Needle Worm","563":"Wretched Ghost of the Attic","564":"Great Mammoth of Goldfine","565":"Man-eating Black Shark","566":"Yormungarde","567":"Darkworld Thorns","568":"Anthrosaurus","569":"Drooling Lizard","570":"Trakadon","571":"B. Dragon Jungle King","572":"Empress Judge","573":"Little D","574":"Witch of the Black Forest","575":"Ancient One of the Deep Forest","576":"Giant Scorpion of the Tundra","577":"Crow Goblin","578":"Leo Wizard","579":"Abyss Flower","580":"Patrol Robo","581":"Takuhee","582":"Dark Witch","583":"Weather Report","584":"Binding Chain","585":"Mechanical Snail","586":"Greenkappa","587":"Mon Larvas","588":"Living Vase","589":"Tentacle Plant","590":"Beaked Snake","591":"Morphing Jar","592":"Muse-A","593":"Giant Turtle Who Feeds on Flames","594":"Rose Spectre of Dunn","595":"Fiend Refrection #1","596":"Ghoul with an Appetite","597":"Pale Beast","598":"Little Chimera","599":"Violent Rain","600":"Key Mace #2","601":"Tenderness","602":"Penguin Soldier","603":"Fairy Dragon","604":"Obese Marmot of Nefariousness","605":"Liquid Beast","606":"Twin Long Rods 2","607":"Great Bill","608":"Shining Friendship","609":"Bladefly","610":"Electric Lizard","611":"Hiro's Shadow Scout","612":"Lady of Faith","613":"Twin-headed Thunder Dragon","614":"Hunter Spider","615":"Armored Starfish","616":"Hourglass of Courage","617":"Marine Beast","618":"Warrior of Tradition","619":"Rock Spirit","620":"Snakeyashi","621":"Succubus Knight","622":"Ill Witch","623":"The Thing That Hides In the Mud","624":"High Tide Gyojin","625":"Fairy of the Fountain","626":"Amazon of the Seas","627":"Nekogal #2","628":"Witch's Apprentice","629":"Armored Rat","630":"Ancient Lizard Warrior","631":"Maiden of the Moonlight","632":"Stone Ogre Grotto","633":"Winged Egg of New Life","634":"Night Lizard","635":"Queen's Double","636":"Blue-winged Crown","637":"Trent","638":"Queen of Autumn Leaves","639":"Amphibious Bugroth","640":"Acid Crawler","641":"Invader of the Throne","642":"Mystical Sheep #1","643":"Disk Magician","644":"Flame Viper","645":"Royal Guard","646":"Gruesome Goo","647":"Hyosube","648":"Machine Attacker","649":"Hibikime","650":"Whiptail Crow","651":"Kunai with Chain","652":"Magical Labyrinth","653":"Warrior Elimination","654":"Salamandra","655":"Cursebreaker","656":"Eternal Rest","657":"Megamorph","658":"Metalmorph","659":"Winged Trumpeter","660":"Stain Storm","661":"Crush Card","662":"Eradicating Aerosol","663":"Breath of Light","664":"Eternal Draught","665":"Curse of Millennium Shield","666":"Yamadron Ritual","667":"Gate Guardian Ritual","668":"Bright Castle","669":"Shadow Spell","670":"Black Luster Ritual","671":"Zera Ritual","672":"Harpie's Feather Duster","673":"War-lion Ritual","674":"Beastry Mirror Ritual","675":"Ultimate Dragon","676":"Commencement Dance","677":"Hamburger Recipe","678":"Revival of Sennen Genjin","679":"Novox's Prayer","680":"Curse of Tri-Horned Dragon","681":"House of Adhesive Tape","682":"Eatgaboon","683":"Bear Trap","684":"Invisible Wire","685":"Acid Trap Hole","686":"Widespread Ruin","687":"Goblin Fan","688":"Bad Reaction to Simochi","689":"Reverse Trap","690":"Fake Trap","691":"Revived of Serpent Night Dragon","692":"Turtle Oath","693":"Contruct of Mask","694":"Resurrection of Chakra","695":"Puppet Ritual","696":"Javelin Beetle Pact","697":"Garma Sword Oath","698":"Cosmo Queen's Prayer","699":"Revival of Skeleton Rider","700":"Fortress Whale's Oath","701":"Performance of Sword","702":"Hungry Burger","703":"Sengenjin","704":"Skull Guardian","705":"Tri-horned Dragon","706":"Serpent Night Dragon","707":"Skull Knight","708":"Cosmo Queen","709":"Chakra","710":"Crab Turtle","711":"Mikazukinoyaiba","712":"Meteor Dragon","713":"Meteor B. Dragon","714":"Firewing Pegasus","715":"Psycho-Puppet","716":"Garma Sword","717":"Javelin Beetle","718":"Fortress Whale","719":"Dokurorider","720":"Mask of Shine & Dark","721":"Dark Magic Ritual","722":"Magician of Black Chaos"};
+  window.PT_CARD_SEARCH_ALIASES_BY_ID = {"82":["Dragão B. de olhos vermelhos","Red-eyes B. Dragon","Dragão B. de Olhos Vermelhos","Dragão Negro de olhos vermelhos"]};
+
+  function normSearch(value){
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9#\s-]/g, ' ')
+      .replace(/[-_]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  var termMap = {
+    'dragao':'dragon','dragoes':'dragon','dragon':'dragon','dragones':'dragon','dragonzinho':'baby dragon',
+    'branco':'white','branca':'white','blanco':'white','blanca':'white',
+    'azul':'blue','azuis':'blue','azules':'blue',
+    'olho':'eye','olhos':'eyes','ojo':'eye','ojos':'eyes',
+    'vermelho':'red','vermelha':'red','rojo':'red','roja':'red',
+    'negro':'black','negra':'black','preto':'black','preta':'black','oscuro':'dark','oscura':'dark','escuro':'dark','escura':'dark',
+    'mago':'magician','maga':'magician','feiticeiro':'spellcaster','feiticeira':'spellcaster','hechicero':'spellcaster','hechicera':'spellcaster',
+    'guerreiro':'warrior','guerreira':'warrior','guerrero':'warrior','guerrera':'warrior',
+    'cavaleiro':'knight','caballero':'knight','soldado':'soldier',
+    'caveira':'skull','calavera':'skull','cranio':'skull','craneo':'skull',
+    'elfo':'elf','elfa':'elf','duende':'elf',
+    'gigante':'giant','bebe':'baby','baby':'baby',
+    'fada':'fairy','hada':'fairy','besta':'beast','bestia':'beast','fera':'beast',
+    'zumbi':'zombie','muerto':'zombie','morto':'zombie',
+    'inseto':'insect','insecto':'insect','peixe':'fish','pez':'fish',
+    'maquina':'machine','planta':'plant','demonio':'fiend','diablo':'fiend',
+    'reptil':'reptile','dinossauro':'dinosaur','dinosaurio':'dinosaur','rocha':'rock','roca':'rock',
+    'trovao':'thunder','trueno':'thunder','fogo':'fire','fuego':'fire','agua':'water','aqua':'water','vento':'wind','viento':'wind','terra':'earth','tierra':'earth','luz':'light','trevas':'dark','sombra':'dark',
+    'meteoro':'meteor','meteorito':'meteor','captura':'capture','capturar':'capture','jarro':'jar','jarra':'jar','frasco':'jar','jarron':'jar',
+    'senhor':'lord','senor':'lord','rei':'king','rey':'king','rainha':'queen','reina':'queen',
+    'magica':'magic','magicas':'magic','magia':'magic','magias':'magic','hechizo':'magic','hechizos':'magic',
+    'armadilha':'trap','armadilhas':'trap','trampa':'trap','trampas':'trap','equipamento':'equip','equipamentos':'equip','equipo':'equip','campo':'field','terreno':'field','ritual':'ritual'
+  };
+
+  var stop = {'de':1,'do':1,'da':1,'dos':1,'das':1,'del':1,'la':1,'el':1,'los':1,'las':1,'o':1,'a':1,'os':1,'as':1,'the':1,'of':1,'and':1,'e':1,'y':1};
+
+  function getCardId(card){
+    return String(Number(card && (card._idnum || card.ID || card.Number) || 0));
+  }
+
+  function translatedTerms(query){
+    var clean = normSearch(query);
+    var joined = clean.replace(/\s+/g, '');
+    var out = [];
+    if(termMap[joined]) out = out.concat(String(termMap[joined]).split(' '));
+    clean.split(' ').forEach(function(w){
+      if(!w || stop[w]) return;
+      String(termMap[w] || w).split(' ').forEach(function(part){
+        part = normSearch(part);
+        if(part && !stop[part]) out.push(part);
+      });
+    });
+    return Array.from(new Set(out));
+  }
+
+  function getPortugueseSearchText(card){
+    var id = getCardId(card);
+    var names = [];
+    if(window.PT_CARD_NAMES_BY_ID[id]) names.push(window.PT_CARD_NAMES_BY_ID[id]);
+    (window.PT_CARD_SEARCH_ALIASES_BY_ID[id] || []).forEach(function(alias){ names.push(alias); });
+    return normSearch(names.join(' '));
+  }
+
+  window.cardMatchesSearch = function(card, query){
+    var q = normSearch(query);
+    if(!q) return true;
+
+    if(/^\d+$/.test(q)){
+      return [card.ID, card.Number, card.Password, card._hex].some(function(v){
+        return normSearch(v).indexOf(q) >= 0;
+      });
+    }
+
+    var enName = normSearch(card['Card Name (English)']);
+    var ptName = getPortugueseSearchText(card);
+
+    if(enName.indexOf(q) >= 0 || ptName.indexOf(q) >= 0) return true;
+
+    var originalTerms = q.split(' ').filter(function(w){ return w && !stop[w]; });
+    if(originalTerms.length && originalTerms.every(function(t){
+      return enName.indexOf(t) >= 0 || ptName.indexOf(t) >= 0;
+    })) return true;
+
+    var terms = translatedTerms(query);
+    return terms.length && terms.every(function(t){ return enName.indexOf(t) >= 0; });
+  };
+  try{ cardMatchesSearch = window.cardMatchesSearch; }catch(e){}
+
+  window.fillSearchSuggestions = function(){
+    var dl = document.getElementById('cardSearchSuggestions');
+    if(!dl || typeof CARDS === 'undefined') return;
+    var values = [];
+    CARDS.forEach(function(card){
+      var id = getCardId(card);
+      if(card['Card Name (English)']) values.push(card['Card Name (English)']);
+      if(window.PT_CARD_NAMES_BY_ID[id]) values.push(window.PT_CARD_NAMES_BY_ID[id]);
+      (window.PT_CARD_SEARCH_ALIASES_BY_ID[id] || []).forEach(function(alias){ values.push(alias); });
+      if(card.Password) values.push(card.Password);
+      if(card.ID) values.push(card.ID);
+    });
+    var unique = Array.from(new Set(values.map(function(v){ return String(v || '').trim(); }).filter(Boolean))).slice(0, 3000);
+    dl.innerHTML = unique.map(function(v){
+      return '<option value="' + String(v).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]; }) + '"></option>';
+    }).join('');
+  };
+  try{ fillSearchSuggestions = window.fillSearchSuggestions; }catch(e){}
+
+  try{ if(typeof fillSearchSuggestions === 'function') fillSearchSuggestions(); }catch(e){}
+  try{ if(typeof renderTable === 'function') renderTable(); }catch(e){}
 })();
 </script>
 
